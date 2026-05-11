@@ -20,6 +20,11 @@ CFG = {
             "model_group": "instruct_llm",
             "llm_instruct": "llm-classifier",
             "search_instruct": "search-base",
+        },
+        "next_node_instruct": {
+            "model_group": "instruct_llm",
+            "llm_instruct": "llm-next-node",
+            "search_instruct": "search-random-walk",
         }
     },
     "run_groups": {"classifier_runs": ["classifier_instruct"]},
@@ -47,3 +52,9 @@ def test_model_override_keeps_spec_otherwise_same():
 def test_unknown_spec_is_rejected():
     with pytest.raises(KeyError):
         load_run_spec(CFG, "missing")
+
+
+def test_next_node_spec_uses_random_walk_prompt():
+    spec = load_run_spec(CFG, "next_node_instruct")
+    assert spec.prompt == "random-walk-next-node"
+    assert spec.llm_instruct == "llm-next-node"

@@ -53,6 +53,12 @@ Run a group:
 uv run python -m llm_soc_nav run --group path_runs
 ```
 
+Run random-walk next-node scoring for instruct models:
+
+```bash
+uv run python -m llm_soc_nav run --spec next_node_instruct
+```
+
 Tiny smoke run with one model and two questions:
 
 ```bash
@@ -71,7 +77,7 @@ uv run pytest
 
 `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings.
 
-Model groups are intentionally combinable with the two task instructions:
+Model groups are intentionally combinable with the task instructions:
 
 - `instruct_llm`
 - `reasoning_llm`
@@ -96,6 +102,8 @@ Search instructions are only applied to `llm-path` runs. Use `path_search_runs` 
 ```bash
 uv run python -m llm_soc_nav run --group path_search_runs
 ```
+
+The `llm-next-node` run spec uses instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API.
 
 ## Results
 

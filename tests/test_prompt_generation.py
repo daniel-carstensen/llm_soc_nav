@@ -1,6 +1,11 @@
 import pandas as pd
 
-from llm_soc_nav.prompt_generation import PROMPT_COLUMNS, PromptSettings, generate_questions
+from llm_soc_nav.prompt_generation import (
+    PROMPT_COLUMNS,
+    PromptSettings,
+    generate_questions,
+    generate_random_walk_questions,
+)
 
 
 def test_generate_questions_is_deterministic():
@@ -26,3 +31,14 @@ def test_generate_questions_is_deterministic():
     pd.testing.assert_frame_equal(first, second)
     assert list(first.columns) == PROMPT_COLUMNS
     assert "Find the shortest path" in first.loc[0, "path_question"]
+
+
+def test_generate_random_walk_questions_uses_configurable_prefix_lengths():
+    adjacency_sets = [(["a is friends with b."], list("abcdefghijklm"))]
+    questions = generate_random_walk_questions(adjacency_sets, prefix_lengths=[0, 2], seed=42)
+
+    assert set(questions["prefix_length"]) == {0, 2}
+    assert len(questions) == 26
+    zero_prefix = questions.loc[questions["prefix_length"] == 0].iloc[0]
+    assert "Path so far:" in zero_prefix["random_walk_question"]
+    assert zero_prefix["path_so_far"] == zero_prefix["start_node"]

@@ -12,6 +12,9 @@ prompt_generation:
   random_name_count: 1000
   n_prompt_sets: 100
 
+random_walk_generation:
+  prefix_lengths: [0, 1, 2, 3, 5, 8]
+
 model_groups:
   instruct_llm:
     - gemma3:4b
@@ -40,7 +43,7 @@ model_groups:
         top_k: 20
 
 generation:
-  top_logprobs: 12
+  top_logprobs: 64
   llm-classifier:
     num_predict: 12
     logprobs: true
@@ -55,6 +58,15 @@ generation:
     logprobs: false
     options:
       seed: 42
+  llm-next-node:
+    num_predict: 12
+    logprobs: true
+    options:
+      temperature: 0
+      top_p: 0
+      top_k: 1
+      seed: 42
+      stop: ["\n", " ", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
 
 run_specs:
   classifier_instruct:
@@ -71,26 +83,6 @@ run_specs:
     model_group: instruct_llm
     llm_instruct: llm-path
     search_instruct: search-base
-    output_label: llm-path
-  path_instruct_bfs:
-    model_group: instruct_llm
-    llm_instruct: llm-path
-    search_instruct: search-bfs
-    output_label: llm-path
-  path_instruct_sr_low:
-    model_group: instruct_llm
-    llm_instruct: llm-path
-    search_instruct: search-sr-low-gamma
-    output_label: llm-path
-  path_instruct_sr_medium:
-    model_group: instruct_llm
-    llm_instruct: llm-path
-    search_instruct: search-sr-medium-gamma
-    output_label: llm-path
-  path_instruct_sr_high:
-    model_group: instruct_llm
-    llm_instruct: llm-path
-    search_instruct: search-sr-high-gamma
     output_label: llm-path
   path_reasoning:
     model_group: reasoning_llm
@@ -117,6 +109,11 @@ run_specs:
     llm_instruct: llm-path
     search_instruct: search-sr-high-gamma
     output_label: llm-path
+  next_node_instruct:
+    model_group: instruct_llm
+    llm_instruct: llm-next-node
+    search_instruct: search-random-walk
+    output_label: llm-next-node
 
 run_groups:
   classifier_runs:
@@ -126,10 +123,6 @@ run_groups:
     - path_instruct
     - path_reasoning
   path_search_runs:
-    - path_instruct_bfs
-    - path_instruct_sr_low
-    - path_instruct_sr_medium
-    - path_instruct_sr_high
     - path_reasoning_bfs
     - path_reasoning_sr_low
     - path_reasoning_sr_medium
@@ -137,10 +130,9 @@ run_groups:
   instruct_llm_runs:
     - classifier_instruct
     - path_instruct
-    - path_instruct_bfs
-    - path_instruct_sr_low
-    - path_instruct_sr_medium
-    - path_instruct_sr_high
+    - next_node_instruct
+  next_node_runs:
+    - next_node_instruct
   reasoning_llm_runs:
     - classifier_reasoning
     - path_reasoning
@@ -148,15 +140,12 @@ run_groups:
     - path_reasoning_sr_low
     - path_reasoning_sr_medium
     - path_reasoning_sr_high
+    - next_node_instruct
   all:
     - classifier_instruct
     - classifier_reasoning
     - path_instruct
     - path_reasoning
-    - path_instruct_bfs
-    - path_instruct_sr_low
-    - path_instruct_sr_medium
-    - path_instruct_sr_high
     - path_reasoning_bfs
     - path_reasoning_sr_low
     - path_reasoning_sr_medium

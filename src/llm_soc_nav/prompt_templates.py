@@ -25,6 +25,11 @@ LLM_INSTRUCTIONS: dict[str, str] = {
         "as provided in the problem.\nOutput must be entirely lowercase.\nProvide only "
         "the path and nothing else.\n\n"
     ),
+    "llm-next-node": (
+        "You predict the next node in a random walk on a friendship graph. "
+        "Respond with exactly one node label and nothing else. No punctuation. "
+        "No explanation. Always match the node label spelling exactly.\n\n"
+    ),
 }
 
 SEARCH_INSTRUCTIONS: dict[str, str] = {
@@ -51,6 +56,10 @@ SEARCH_INSTRUCTIONS: dict[str, str] = {
         "For example, if A is friends with B, B is friends with C, and C is friends with D, then it is more likely that A, B, C, and D and part of the same clique and are all connected with each other. "
         "When deciding where to send the message first, consider both the listed friendships and the broader network they imply through likely unobserved connections. Choose the option most likely to lead to the target through the fewest steps."
     ),
+    "search-random-walk": (
+        "A walker follows this rule: at each step, choose uniformly at random among the current node's neighbors. "
+        "The walker may revisit nodes, and immediate backtracking is allowed."
+    ),
 }
 
 
@@ -65,4 +74,12 @@ def path_question(start: str, end: str, opt1: str, opt2: str) -> str:
     return (
         f"Find the shortest path from {start} to {end}. The first step after {start} "
         f"must be either {opt1} or {opt2}."
+    )
+
+
+def random_walk_question(path: list[str]) -> str:
+    return (
+        "Path so far:\n"
+        f"{' -> '.join(path)}\n\n"
+        "What is the next node? Respond with exactly one node label."
     )

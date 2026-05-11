@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from llm_soc_nav.prompt_generation import CANONICAL_PROMPT
+from llm_soc_nav.prompt_generation import CANONICAL_PROMPT, RANDOM_WALK_PROMPT
 
 
 @dataclass(frozen=True)
@@ -45,9 +45,10 @@ def _models_for_spec(cfg: dict[str, Any], raw: dict[str, Any]) -> list[ModelSpec
 def load_run_spec(cfg: dict[str, Any], name: str, model_override: list[str] | None = None) -> RunSpec:
     raw = cfg["run_specs"][name]
     models = [model_spec(model) for model in model_override] if model_override else _models_for_spec(cfg, raw)
+    prompt = RANDOM_WALK_PROMPT if raw["llm_instruct"] == "llm-next-node" else CANONICAL_PROMPT
     return RunSpec(
         name=name,
-        prompt=CANONICAL_PROMPT,
+        prompt=prompt,
         llm_instruct=raw["llm_instruct"],
         search_instruct=raw.get("search_instruct", "search-base"),
         models=list(models),
@@ -73,7 +74,7 @@ def list_run_specs(cfg: dict[str, Any]) -> str:
     for name, raw in cfg["run_specs"].items():
         model_source = raw.get("model_group", "inline-models")
         lines.append(
-            f"  {name}: prompt={CANONICAL_PROMPT} llm={raw['llm_instruct']} "
+            f"  {name}: prompt={RANDOM_WALK_PROMPT if raw['llm_instruct'] == 'llm-next-node' else CANONICAL_PROMPT} llm={raw['llm_instruct']} "
             f"search={raw.get('search_instruct', 'search-base')} models={model_source}"
         )
 

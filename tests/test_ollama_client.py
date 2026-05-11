@@ -80,10 +80,35 @@ def test_model_prompt_prefix_is_applied():
     assert prompt.startswith("/no_think")
 
 
+def test_next_node_prompt_uses_random_walk_question_and_search_rule():
+    row = pd.Series(
+        {
+            "question": "classifier wording",
+            "path_question": "path wording",
+            "random_walk_question": "Path so far:\na -> b\n\nWhat is the next node?",
+            "opt1": "b",
+            "opt2": "d",
+        }
+    )
+    spec = RunSpec(
+        name="next_node_instruct",
+        prompt="random-walk-next-node",
+        llm_instruct="llm-next-node",
+        search_instruct="search-random-walk",
+        models=[],
+        output_label="llm-next-node",
+    )
+
+    prompt = build_model_prompt(row, spec)
+    assert "Path so far" in prompt
+    assert "choose uniformly at random" in prompt
+    assert "classifier wording" not in prompt
+
+
 def test_model_options_override_generation_defaults(monkeypatch, tmp_path):
     calls = []
 
-    def fake_call_ollama(model, prompt, options, use_logprobs, top_logprobs):
+    def fake_call_ollama(model, prompt, options, use_logprobs, top_logprobs, **kwargs):
         calls.append(options)
         return {"response": "b", "logprobs": None}
 

@@ -62,3 +62,48 @@ def parse_response(resp: Any, opt1: str, opt2: str) -> dict[str, Any]:
         "logprobs_json": logprobs_json,
         "top_logprobs_json": top_logprobs_json,
     }
+
+
+def normalize_node(raw: str, candidates: list[str]) -> str | None:
+    if not raw:
+        return None
+    token = raw.strip().strip("\"'`").split()[0].strip(STRIP_CHARS)
+    return {candidate.lower(): candidate for candidate in candidates}.get(token.lower())
+
+
+def first_token_top_logprobs(resp: Any) -> dict[str, float]:
+    logprobs = response_field(resp, "logprobs")
+    if not isinstance(logprobs, list) or not logprobs:
+        return {}
+
+    top_logprobs = response_field(logprobs[0], "top_logprobs", []) or []
+    scores: dict[str, float] = {}
+    for item in top_logprobs:
+        token = str(response_field(item, "token", "")).strip().strip(STRIP_CHARS).lower()
+        logprob = response_field(item, "logprob")
+        if token and logprob is not None:
+            scores[token] = float(logprob)
+    return scores
+
+
+def candidate_logprobs(resp: Any, candidates: list[str]) -> dict[str, float | None]:
+    top_scores = first_token_top_logprobs(resp)
+    return {candidate: top_scores.get(candidate.lower()) for candidate in candidates}
+
+
+def parse_next_node_response(resp: Any, all_nodes: list[str]) -> dict[str, Any]:
+    raw = str(response_field(resp, "response", "") or "").strip()
+    thinking = str(response_field(resp, "thinking", "") or "").strip()
+    logprobs_json, top_logprobs_json = serialize_logprobs(response_field(resp, "logprobs"))
+    node = normalize_node(raw, all_nodes)
+    scores = candidate_logprobs(resp, all_nodes)
+
+    return {
+        "raw_response": raw,
+        "llm_next_node": node or "",
+        "is_valid_node": node is not None,
+        "thinking": thinking,
+        "candidate_logprobs_json": json.dumps(scores, ensure_ascii=False),
+        "logprobs_json": logprobs_json,
+        "top_logprobs_json": top_logprobs_json,
+    }
