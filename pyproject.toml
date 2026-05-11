@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-soc-nav"
+version = "0.1.0"
+description = "Minimal research tools for LLM social network navigation experiments."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "ollama",
+    "pandas",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

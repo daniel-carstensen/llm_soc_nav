@@ -1,0 +1,163 @@
+seed: 42
+
+paths:
+  raw:
+    baby_names: data/raw/Popular_Baby_Names.csv
+    tasks: data/raw/son_et_al_nhb_2024_nav_problems.csv
+  prompts_dir: data/prompts
+  results_dir: /users/dlcarste/data/llm_soc_nav/results
+
+prompt_generation:
+  name_source: baby_names   # baby_names or random_strings
+  random_name_count: 1000
+  n_prompt_sets: 100
+
+model_groups:
+  instruct_llm:
+    - gemma3:4b
+    - gemma3:12b
+    - gemma3:27b
+    - mistral-small3.2:24b
+    - name: qwen3:8b
+      label: qwen3-8b-no-think
+      prompt_prefix: "/no_think\n\n"
+      options:
+        temperature: 0
+        top_p: 0
+        top_k: 1
+  reasoning_llm:
+    - name: qwen3:8b
+      label: qwen3-8b
+      options:
+        temperature: 0.6
+        top_p: 0.95
+        top_k: 20
+    - name: deepseek-r1:7b
+      label: deepseek-r1-7b
+      options:
+        temperature: 0.6
+        top_p: 0.95
+        top_k: 20
+
+generation:
+  top_logprobs: 12
+  llm-classifier:
+    num_predict: 12
+    logprobs: true
+    options:
+      temperature: 0
+      top_p: 0
+      top_k: 1
+      seed: 42
+      stop: ["\n", " ", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
+  llm-path:
+    num_predict: 1024
+    logprobs: false
+    options:
+      seed: 42
+
+run_specs:
+  classifier_instruct:
+    model_group: instruct_llm
+    llm_instruct: llm-classifier
+    search_instruct: search-base
+    output_label: llm-classifier
+  classifier_reasoning:
+    model_group: reasoning_llm
+    llm_instruct: llm-classifier
+    search_instruct: search-base
+    output_label: llm-classifier
+  path_instruct:
+    model_group: instruct_llm
+    llm_instruct: llm-path
+    search_instruct: search-base
+    output_label: llm-path
+  path_instruct_bfs:
+    model_group: instruct_llm
+    llm_instruct: llm-path
+    search_instruct: search-bfs
+    output_label: llm-path
+  path_instruct_sr_low:
+    model_group: instruct_llm
+    llm_instruct: llm-path
+    search_instruct: search-sr-low-gamma
+    output_label: llm-path
+  path_instruct_sr_medium:
+    model_group: instruct_llm
+    llm_instruct: llm-path
+    search_instruct: search-sr-medium-gamma
+    output_label: llm-path
+  path_instruct_sr_high:
+    model_group: instruct_llm
+    llm_instruct: llm-path
+    search_instruct: search-sr-high-gamma
+    output_label: llm-path
+  path_reasoning:
+    model_group: reasoning_llm
+    llm_instruct: llm-path
+    search_instruct: search-base
+    output_label: llm-path
+  path_reasoning_bfs:
+    model_group: reasoning_llm
+    llm_instruct: llm-path
+    search_instruct: search-bfs
+    output_label: llm-path
+  path_reasoning_sr_low:
+    model_group: reasoning_llm
+    llm_instruct: llm-path
+    search_instruct: search-sr-low-gamma
+    output_label: llm-path
+  path_reasoning_sr_medium:
+    model_group: reasoning_llm
+    llm_instruct: llm-path
+    search_instruct: search-sr-medium-gamma
+    output_label: llm-path
+  path_reasoning_sr_high:
+    model_group: reasoning_llm
+    llm_instruct: llm-path
+    search_instruct: search-sr-high-gamma
+    output_label: llm-path
+
+run_groups:
+  classifier_runs:
+    - classifier_instruct
+    - classifier_reasoning
+  path_runs:
+    - path_instruct
+    - path_reasoning
+  path_search_runs:
+    - path_instruct_bfs
+    - path_instruct_sr_low
+    - path_instruct_sr_medium
+    - path_instruct_sr_high
+    - path_reasoning_bfs
+    - path_reasoning_sr_low
+    - path_reasoning_sr_medium
+    - path_reasoning_sr_high
+  instruct_llm_runs:
+    - classifier_instruct
+    - path_instruct
+    - path_instruct_bfs
+    - path_instruct_sr_low
+    - path_instruct_sr_medium
+    - path_instruct_sr_high
+  reasoning_llm_runs:
+    - classifier_reasoning
+    - path_reasoning
+    - path_reasoning_bfs
+    - path_reasoning_sr_low
+    - path_reasoning_sr_medium
+    - path_reasoning_sr_high
+  all:
+    - classifier_instruct
+    - classifier_reasoning
+    - path_instruct
+    - path_reasoning
+    - path_instruct_bfs
+    - path_instruct_sr_low
+    - path_instruct_sr_medium
+    - path_instruct_sr_high
+    - path_reasoning_bfs
+    - path_reasoning_sr_low
+    - path_reasoning_sr_medium
+    - path_reasoning_sr_high

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environments
+.venv/
+venv/
+env/
+.env
+
+# Notebooks and editors
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# Runtime outputs
+logs/
+results/
+outputs/
+*.log
+*.out
+*.err
+
+# Temporary files
+*.tmp
+*.bak
+.DS_Store
+
+# Keep raw data and canonical prompts tracked.
+!data/raw/
+!data/prompts/

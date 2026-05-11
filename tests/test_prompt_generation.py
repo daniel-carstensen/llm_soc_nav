@@ -1,0 +1,28 @@
+import pandas as pd
+
+from llm_soc_nav.prompt_generation import PROMPT_COLUMNS, PromptSettings, generate_questions
+
+
+def test_generate_questions_is_deterministic():
+    adjacency_sets = [(["a is friends with b.", "b is friends with c."], list("abcdefghijklm"))]
+    tasks = pd.DataFrame(
+        [
+            {
+                "startpoint_id": 1,
+                "endpoint_id": 3,
+                "opt1_id": 2,
+                "opt2_id": 8,
+                "correct_choice": 2,
+            }
+        ]
+    )
+    settings = PromptSettings(
+        n_prompt_sets=1,
+    )
+
+    first = generate_questions(adjacency_sets, tasks, settings, seed=42)
+    second = generate_questions(adjacency_sets, tasks, settings, seed=42)
+
+    pd.testing.assert_frame_equal(first, second)
+    assert list(first.columns) == PROMPT_COLUMNS
+    assert "Find the shortest path" in first.loc[0, "path_question"]

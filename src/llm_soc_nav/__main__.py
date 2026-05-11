@@ -1,0 +1,50 @@
+"""Command-line interface for the research workflow."""
+
+from __future__ import annotations
+
+import argparse
+
+from llm_soc_nav.config import DEFAULT_CONFIG, load_config
+from llm_soc_nav.ollama_client import run_spec
+from llm_soc_nav.prompt_generation import generate_all_prompts
+from llm_soc_nav.run_specs import expand_specs, list_run_specs
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="llm_soc_nav")
+    parser.add_argument("--config", default=str(DEFAULT_CONFIG), help="Path to YAML config.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    generate = subparsers.add_parser("generate-prompts", help="Regenerate canonical prompt CSVs.")
+    generate.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
+
+    list_runs = subparsers.add_parser("list-runs", help="List named run specs and groups.")
+    list_runs.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
+
+    run = subparsers.add_parser("run", help="Run a named spec or group against Ollama.")
+    run.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
+    target = run.add_mutually_exclusive_group(required=True)
+    target.add_argument("--spec", help="Single run spec name from config.")
+    target.add_argument("--group", help="Run group name from config.")
+    run.add_argument("--limit", type=int, help="Limit number of questions per model.")
+    run.add_argument("--models", nargs="+", help="Override models for this run.")
+    return parser
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+    cfg = load_config(args.config)
+
+    if args.command == "generate-prompts":
+        for path in generate_all_prompts(cfg):
+            print(f"Wrote {path}")
+    elif args.command == "list-runs":
+        print(list_run_specs(cfg))
+    elif args.command == "run":
+        specs = expand_specs(cfg, spec=args.spec, group=args.group, model_override=args.models)
+        for spec in specs:
+            run_spec(cfg, spec, limit=args.limit)
+
+
+if __name__ == "__main__":
+    main()
