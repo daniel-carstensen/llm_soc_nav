@@ -17,10 +17,13 @@ mkdir -p logs
 # --- site-specific environment setup ---
 module purge
 module load ollama/0.17.7
-module load miniforge3/25.3.0-3-a6hh
-source "${MAMBA_ROOT_PREFIX}/etc/profile.d/conda.sh"
-conda activate ulg_v1
-export PYTHONPATH="${PWD}/src:${PYTHONPATH:-}"
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "uv is not available on PATH" >&2
+    exit 1
+fi
+
+uv sync --frozen --all-groups
 
 find_available_port() {
     local port=11434
@@ -71,4 +74,4 @@ if [[ "${ready}" -ne 1 ]]; then
 fi
 
 # Edit --spec or --group for the desired experiment.
-srun /users/dlcarste/.conda/envs/ulg_v1/bin/python3 -m llm_soc_nav run --spec path_reasoning
+srun uv run python -m llm_soc_nav run --spec path_reasoning

@@ -5,10 +5,16 @@ Minimal research code for probing Ollama LLMs on social network navigation probl
 ## Setup
 
 ```bash
-python -m pip install -e ".[dev]"
+uv sync --all-groups
 ```
 
-On the cluster, use the existing module and conda setup in `scripts/run_ollama.sh`.
+Run commands through the uv-managed environment:
+
+```bash
+uv run python -m llm_soc_nav list-runs
+```
+
+On the cluster, use `scripts/run_ollama.sh`; it assumes `uv` is available on `PATH`.
 
 ## Layout
 
@@ -26,31 +32,37 @@ archive/                  # old sandbox scripts kept for reference
 List available named runs:
 
 ```bash
-python -m llm_soc_nav list-runs
+uv run python -m llm_soc_nav list-runs
 ```
 
 Regenerate canonical prompt CSVs:
 
 ```bash
-python -m llm_soc_nav generate-prompts
+uv run python -m llm_soc_nav generate-prompts
 ```
 
 Run one experiment spec:
 
 ```bash
-python -m llm_soc_nav run --spec classifier_instruct
+uv run python -m llm_soc_nav run --spec classifier_instruct
 ```
 
 Run a group:
 
 ```bash
-python -m llm_soc_nav run --group path_runs
+uv run python -m llm_soc_nav run --group path_runs
 ```
 
 Tiny smoke run with one model and two questions:
 
 ```bash
-python -m llm_soc_nav run --spec classifier_instruct --limit 2 --models gemma3:4b
+uv run python -m llm_soc_nav run --spec classifier_instruct --limit 2 --models gemma3:4b
+```
+
+Run tests:
+
+```bash
+uv run pytest
 ```
 
 ## Config
@@ -82,7 +94,7 @@ model_groups:
 Search instructions are only applied to `llm-path` runs. Use `path_search_runs` to run the BFS and social-reasoning prompt variants:
 
 ```bash
-python -m llm_soc_nav run --group path_search_runs
+uv run python -m llm_soc_nav run --group path_search_runs
 ```
 
 ## Results

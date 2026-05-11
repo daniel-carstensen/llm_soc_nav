@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
 
 [project]
 name = "llm-soc-nav"
@@ -9,16 +9,18 @@ description = "Minimal research tools for LLM social network navigation experime
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "ollama",
-    "pandas",
-    "pyyaml",
+    "ollama>=0.5",
+    "pandas>=2.2",
+    "pyyaml>=6.0",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest"]
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_soc_nav"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
