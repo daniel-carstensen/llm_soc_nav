@@ -18,6 +18,9 @@ random_walk_generation:
     - prompt: random-walk-next-node_social-names
       graph_context: social
       name_source: baby_names
+    - prompt: random-walk-next-node_social-random-strings
+      graph_context: social
+      name_source: random_strings
     - prompt: random-walk-next-node_generic-names
       graph_context: generic
       name_source: baby_names
@@ -125,6 +128,12 @@ run_specs:
     llm_instruct: llm-next-node
     search_instruct: search-random-walk
     output_label: llm-next-node
+  next_node_social_random_instruct:
+    model_group: instruct_llm
+    prompt: random-walk-next-node_social-random-strings
+    llm_instruct: llm-next-node
+    search_instruct: search-random-walk
+    output_label: llm-next-node
   next_node_generic_names_instruct:
     model_group: instruct_llm
     prompt: random-walk-next-node_generic-names
@@ -154,13 +163,16 @@ run_groups:
     - classifier_instruct
     - path_instruct
     - next_node_instruct
+    - next_node_social_random_instruct
     - next_node_generic_names_instruct
     - next_node_generic_random_instruct
   next_node_runs:
     - next_node_instruct
+    - next_node_social_random_instruct
     - next_node_generic_names_instruct
     - next_node_generic_random_instruct
   next_node_control_runs:
+    - next_node_social_random_instruct
     - next_node_generic_names_instruct
     - next_node_generic_random_instruct
   reasoning_llm_runs:
@@ -180,5 +192,6 @@ run_groups:
     - path_reasoning_sr_medium
     - path_reasoning_sr_high
     - next_node_instruct
+    - next_node_social_random_instruct
     - next_node_generic_names_instruct
     - next_node_generic_random_instruct

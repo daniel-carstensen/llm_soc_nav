@@ -58,5 +58,6 @@ def test_random_walk_prompt_conditions_include_non_social_controls():
     conditions = random_walk_prompt_conditions({})
     prompts = {condition["prompt"] for condition in conditions}
     assert "random-walk-next-node_social-names" in prompts
+    assert "random-walk-next-node_social-random-strings" in prompts
     assert "random-walk-next-node_generic-names" in prompts
     assert "random-walk-next-node_generic-random-strings" in prompts

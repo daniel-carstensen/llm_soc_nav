@@ -109,9 +109,10 @@ Search instructions are only applied to `llm-path` runs. Use `path_search_runs` 
 uv run python -m llm_soc_nav run --group path_search_runs
 ```
 
-The `llm-next-node` run specs use instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API. Three random-walk conditions are generated:
+The `llm-next-node` run specs use instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API. Four random-walk conditions are generated:
 
 - `next_node_instruct`: social friendship graph with baby-name node labels.
+- `next_node_social_random_instruct`: social friendship graph with random four-character node labels.
 - `next_node_generic_names_instruct`: generic graph wording with baby-name node labels.
 - `next_node_generic_random_instruct`: generic graph wording with random four-character node labels.
 

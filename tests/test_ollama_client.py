@@ -102,6 +102,7 @@ def test_next_node_prompt_uses_random_walk_question_and_search_rule():
     prompt = build_model_prompt(row, spec)
     assert "Path so far" in prompt
     assert "choose uniformly at random" in prompt
+    assert "friendship graph" not in prompt
     assert "classifier wording" not in prompt
 
 

@@ -27,6 +27,12 @@ CFG = {
             "llm_instruct": "llm-next-node",
             "search_instruct": "search-random-walk",
         },
+        "next_node_social_random_instruct": {
+            "model_group": "instruct_llm",
+            "prompt": "random-walk-next-node_social-random-strings",
+            "llm_instruct": "llm-next-node",
+            "search_instruct": "search-random-walk",
+        },
         "next_node_generic_names_instruct": {
             "model_group": "instruct_llm",
             "prompt": "random-walk-next-node_generic-names",
@@ -70,3 +76,8 @@ def test_next_node_spec_uses_random_walk_prompt():
 def test_next_node_control_spec_uses_generic_prompt():
     spec = load_run_spec(CFG, "next_node_generic_names_instruct")
     assert spec.prompt == "random-walk-next-node_generic-names"
+
+
+def test_next_node_social_random_spec_uses_social_random_prompt():
+    spec = load_run_spec(CFG, "next_node_social_random_instruct")
+    assert spec.prompt == "random-walk-next-node_social-random-strings"

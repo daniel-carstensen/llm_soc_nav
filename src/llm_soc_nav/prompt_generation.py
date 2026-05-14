@@ -16,6 +16,7 @@ from llm_soc_nav.prompt_templates import classifier_question, path_question, ran
 
 CANONICAL_PROMPT = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
 RANDOM_WALK_SOCIAL_NAMES_PROMPT = "random-walk-next-node_social-names"
+RANDOM_WALK_SOCIAL_RANDOM_PROMPT = "random-walk-next-node_social-random-strings"
 RANDOM_WALK_GENERIC_NAMES_PROMPT = "random-walk-next-node_generic-names"
 RANDOM_WALK_GENERIC_RANDOM_PROMPT = "random-walk-next-node_generic-random-strings"
 RANDOM_WALK_PROMPT = RANDOM_WALK_SOCIAL_NAMES_PROMPT
@@ -212,6 +213,11 @@ def random_walk_prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
                     "prompt": RANDOM_WALK_SOCIAL_NAMES_PROMPT,
                     "graph_context": "social",
                     "name_source": "baby_names",
+                },
+                {
+                    "prompt": RANDOM_WALK_SOCIAL_RANDOM_PROMPT,
+                    "graph_context": "social",
+                    "name_source": "random_strings",
                 },
                 {
                     "prompt": RANDOM_WALK_GENERIC_NAMES_PROMPT,

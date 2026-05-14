@@ -26,7 +26,7 @@ LLM_INSTRUCTIONS: dict[str, str] = {
         "the path and nothing else.\n\n"
     ),
     "llm-next-node": (
-        "You predict the next node in a random walk on a friendship graph. "
+        "You predict the next node in a random walk on a graph. "
         "Respond with exactly one node label and nothing else. No punctuation. "
         "No explanation. Always match the node label spelling exactly.\n\n"
     ),
