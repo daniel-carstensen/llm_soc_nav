@@ -77,8 +77,9 @@ def path_question(start: str, end: str, opt1: str, opt2: str) -> str:
     )
 
 
-def random_walk_question(path: list[str]) -> str:
+def random_walk_question(graph_text: str, path: list[str]) -> str:
     return (
+        f"Graph:\n{graph_text}\n\n"
         "Path so far:\n"
         f"{' -> '.join(path)}\n\n"
         "What is the next node? Respond with exactly one node label."

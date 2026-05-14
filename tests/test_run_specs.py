@@ -23,6 +23,13 @@ CFG = {
         },
         "next_node_instruct": {
             "model_group": "instruct_llm",
+            "prompt": "random-walk-next-node_social-names",
+            "llm_instruct": "llm-next-node",
+            "search_instruct": "search-random-walk",
+        },
+        "next_node_generic_names_instruct": {
+            "model_group": "instruct_llm",
+            "prompt": "random-walk-next-node_generic-names",
             "llm_instruct": "llm-next-node",
             "search_instruct": "search-random-walk",
         }
@@ -56,5 +63,10 @@ def test_unknown_spec_is_rejected():
 
 def test_next_node_spec_uses_random_walk_prompt():
     spec = load_run_spec(CFG, "next_node_instruct")
-    assert spec.prompt == "random-walk-next-node"
+    assert spec.prompt == "random-walk-next-node_social-names"
     assert spec.llm_instruct == "llm-next-node"
+
+
+def test_next_node_control_spec_uses_generic_prompt():
+    spec = load_run_spec(CFG, "next_node_generic_names_instruct")
+    assert spec.prompt == "random-walk-next-node_generic-names"

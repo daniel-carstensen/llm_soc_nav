@@ -10,12 +10,15 @@ import numpy as np
 import pandas as pd
 
 from llm_soc_nav.config import resolve_path
-from llm_soc_nav.graph import SOCIAL_GRAPH, friendship_sentences
+from llm_soc_nav.graph import SOCIAL_GRAPH, graph_sentences
 from llm_soc_nav.names import select_names
 from llm_soc_nav.prompt_templates import classifier_question, path_question, random_walk_question
 
 CANONICAL_PROMPT = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
-RANDOM_WALK_PROMPT = "random-walk-next-node"
+RANDOM_WALK_SOCIAL_NAMES_PROMPT = "random-walk-next-node_social-names"
+RANDOM_WALK_GENERIC_NAMES_PROMPT = "random-walk-next-node_generic-names"
+RANDOM_WALK_GENERIC_RANDOM_PROMPT = "random-walk-next-node_generic-random-strings"
+RANDOM_WALK_PROMPT = RANDOM_WALK_SOCIAL_NAMES_PROMPT
 
 PROMPT_COLUMNS = [
     "question",
@@ -35,6 +38,7 @@ class PromptSettings:
     n_prompt_sets: int = 100
     name_source: str = "baby_names"
     random_name_count: int = 1000
+    graph_context: str = "social"
 
 
 def prompt_filename(prompt_name: str = CANONICAL_PROMPT) -> str:
@@ -51,7 +55,7 @@ def generate_adjacency_sets(
 
     for _ in range(settings.n_prompt_sets):
         selected = list(rng.choice(names, size=13, replace=False))
-        sentences = friendship_sentences(selected)
+        sentences = graph_sentences(selected, settings.graph_context)
         rng.shuffle(sentences)
         sets.append((sentences, selected))
 
@@ -100,6 +104,8 @@ def generate_questions(
 
 RANDOM_WALK_COLUMNS = [
     "random_walk_question",
+    "graph_context",
+    "name_source",
     "path_so_far",
     "prefix_length",
     "start_node",
@@ -125,13 +131,16 @@ def generate_random_walk_questions(
     adjacency_sets: list[tuple[list[str], list[str]]],
     prefix_lengths: list[int],
     seed: int,
+    graph_context: str,
+    name_source: str,
 ) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     rows: list[dict[str, Any]] = []
     walk_id = 0
 
-    for prompt_id, (_, names) in enumerate(adjacency_sets):
+    for prompt_id, (sentences, names) in enumerate(adjacency_sets):
         all_nodes = list(names)
+        graph_text = " ".join(sentences)
         for start_id in range(len(SOCIAL_GRAPH)):
             for prefix_length in prefix_lengths:
                 path = sample_walk(names, start_id, prefix_length, rng)
@@ -140,7 +149,9 @@ def generate_random_walk_questions(
                 sampled_next_node = str(rng.choice(valid_next_nodes))
                 rows.append(
                     {
-                        "random_walk_question": random_walk_question(path),
+                        "random_walk_question": random_walk_question(graph_text, path),
+                        "graph_context": graph_context,
+                        "name_source": name_source,
                         "path_so_far": " -> ".join(path),
                         "prefix_length": prefix_length,
                         "start_node": path[0],
@@ -167,6 +178,7 @@ def generate_prompts(
         n_prompt_sets=int(prompt_cfg.get("n_prompt_sets", 100)),
         name_source=prompt_cfg.get("name_source", "baby_names"),
         random_name_count=int(prompt_cfg.get("random_name_count", 1000)),
+        graph_context="social",
     )
     raw_paths = cfg["paths"]["raw"]
     prompts_dir = resolve_path(output_dir or cfg["paths"]["prompts_dir"])
@@ -188,8 +200,37 @@ def generate_prompts(
     return out_path
 
 
-def generate_random_walk_prompts(
+def random_walk_prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
+    return list(
+        cfg.get(
+            "random_walk_generation",
+            {},
+        ).get(
+            "conditions",
+            [
+                {
+                    "prompt": RANDOM_WALK_SOCIAL_NAMES_PROMPT,
+                    "graph_context": "social",
+                    "name_source": "baby_names",
+                },
+                {
+                    "prompt": RANDOM_WALK_GENERIC_NAMES_PROMPT,
+                    "graph_context": "generic",
+                    "name_source": "baby_names",
+                },
+                {
+                    "prompt": RANDOM_WALK_GENERIC_RANDOM_PROMPT,
+                    "graph_context": "generic",
+                    "name_source": "random_strings",
+                },
+            ],
+        )
+    )
+
+
+def generate_random_walk_prompt(
     cfg: dict[str, Any],
+    condition: dict[str, str],
     output_dir: str | Path | None = None,
 ) -> Path:
     seed = int(cfg.get("seed", 42))
@@ -197,8 +238,9 @@ def generate_random_walk_prompts(
     walk_cfg = cfg.get("random_walk_generation", {})
     settings = PromptSettings(
         n_prompt_sets=int(prompt_cfg.get("n_prompt_sets", 100)),
-        name_source=prompt_cfg.get("name_source", "baby_names"),
+        name_source=condition["name_source"],
         random_name_count=int(prompt_cfg.get("random_name_count", 1000)),
+        graph_context=condition["graph_context"],
     )
     raw_paths = cfg["paths"]["raw"]
     prompts_dir = resolve_path(output_dir or cfg["paths"]["prompts_dir"])
@@ -211,13 +253,21 @@ def generate_random_walk_prompts(
     )
     adjacency_sets = generate_adjacency_sets(names, settings, seed)
     prefix_lengths = [int(length) for length in walk_cfg.get("prefix_lengths", [0, 1, 2, 3, 5, 8])]
-    questions = generate_random_walk_questions(adjacency_sets, prefix_lengths, seed)
+    questions = generate_random_walk_questions(
+        adjacency_sets,
+        prefix_lengths,
+        seed,
+        graph_context=settings.graph_context,
+        name_source=settings.name_source,
+    )
 
     prompts_dir.mkdir(parents=True, exist_ok=True)
-    out_path = prompts_dir / prompt_filename(RANDOM_WALK_PROMPT)
+    out_path = prompts_dir / prompt_filename(condition["prompt"])
     questions.to_csv(out_path, index=False)
     return out_path
 
 
 def generate_all_prompts(cfg: dict[str, Any]) -> list[Path]:
-    return [generate_prompts(cfg), generate_random_walk_prompts(cfg)]
+    paths = [generate_prompts(cfg)]
+    paths.extend(generate_random_walk_prompt(cfg, condition) for condition in random_walk_prompt_conditions(cfg))
+    return paths

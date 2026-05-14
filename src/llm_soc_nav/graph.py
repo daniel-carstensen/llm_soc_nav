@@ -26,3 +26,20 @@ def friendship_sentences(names: list[str]) -> list[str]:
         for neighbor_id in sorted(SOCIAL_GRAPH[node_id]):
             sentences.append(f"{names[node_id]} is friends with {names[neighbor_id]}.")
     return sentences
+
+
+def generic_graph_sentences(names: list[str]) -> list[str]:
+    """Return directed generic edge sentences for a 13-label graph assignment."""
+    sentences: list[str] = []
+    for node_id in range(len(SOCIAL_GRAPH)):
+        for neighbor_id in sorted(SOCIAL_GRAPH[node_id]):
+            sentences.append(f"{names[node_id]} is connected to {names[neighbor_id]}.")
+    return sentences
+
+
+def graph_sentences(names: list[str], graph_context: str = "social") -> list[str]:
+    if graph_context == "social":
+        return friendship_sentences(names)
+    if graph_context == "generic":
+        return generic_graph_sentences(names)
+    raise ValueError("graph_context must be 'social' or 'generic'.")

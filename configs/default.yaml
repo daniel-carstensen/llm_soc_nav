@@ -14,6 +14,16 @@ prompt_generation:
 
 random_walk_generation:
   prefix_lengths: [0, 1, 2, 3, 5, 8]
+  conditions:
+    - prompt: random-walk-next-node_social-names
+      graph_context: social
+      name_source: baby_names
+    - prompt: random-walk-next-node_generic-names
+      graph_context: generic
+      name_source: baby_names
+    - prompt: random-walk-next-node_generic-random-strings
+      graph_context: generic
+      name_source: random_strings
 
 model_groups:
   instruct_llm:
@@ -111,6 +121,19 @@ run_specs:
     output_label: llm-path
   next_node_instruct:
     model_group: instruct_llm
+    prompt: random-walk-next-node_social-names
+    llm_instruct: llm-next-node
+    search_instruct: search-random-walk
+    output_label: llm-next-node
+  next_node_generic_names_instruct:
+    model_group: instruct_llm
+    prompt: random-walk-next-node_generic-names
+    llm_instruct: llm-next-node
+    search_instruct: search-random-walk
+    output_label: llm-next-node
+  next_node_generic_random_instruct:
+    model_group: instruct_llm
+    prompt: random-walk-next-node_generic-random-strings
     llm_instruct: llm-next-node
     search_instruct: search-random-walk
     output_label: llm-next-node
@@ -131,8 +154,15 @@ run_groups:
     - classifier_instruct
     - path_instruct
     - next_node_instruct
+    - next_node_generic_names_instruct
+    - next_node_generic_random_instruct
   next_node_runs:
     - next_node_instruct
+    - next_node_generic_names_instruct
+    - next_node_generic_random_instruct
+  next_node_control_runs:
+    - next_node_generic_names_instruct
+    - next_node_generic_random_instruct
   reasoning_llm_runs:
     - classifier_reasoning
     - path_reasoning
@@ -140,7 +170,6 @@ run_groups:
     - path_reasoning_sr_low
     - path_reasoning_sr_medium
     - path_reasoning_sr_high
-    - next_node_instruct
   all:
     - classifier_instruct
     - classifier_reasoning
@@ -150,3 +179,6 @@ run_groups:
     - path_reasoning_sr_low
     - path_reasoning_sr_medium
     - path_reasoning_sr_high
+    - next_node_instruct
+    - next_node_generic_names_instruct
+    - next_node_generic_random_instruct

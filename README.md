@@ -59,6 +59,12 @@ Run random-walk next-node scoring for instruct models:
 uv run python -m llm_soc_nav run --spec next_node_instruct
 ```
 
+Run the two non-social next-node controls:
+
+```bash
+uv run python -m llm_soc_nav run --group next_node_control_runs
+```
+
 Tiny smoke run with one model and two questions:
 
 ```bash
@@ -103,7 +109,11 @@ Search instructions are only applied to `llm-path` runs. Use `path_search_runs` 
 uv run python -m llm_soc_nav run --group path_search_runs
 ```
 
-The `llm-next-node` run spec uses instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API.
+The `llm-next-node` run specs use instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API. Three random-walk conditions are generated:
+
+- `next_node_instruct`: social friendship graph with baby-name node labels.
+- `next_node_generic_names_instruct`: generic graph wording with baby-name node labels.
+- `next_node_generic_random_instruct`: generic graph wording with random four-character node labels.
 
 ## Results
 

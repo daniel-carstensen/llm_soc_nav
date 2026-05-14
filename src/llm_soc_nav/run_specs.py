@@ -45,7 +45,7 @@ def _models_for_spec(cfg: dict[str, Any], raw: dict[str, Any]) -> list[ModelSpec
 def load_run_spec(cfg: dict[str, Any], name: str, model_override: list[str] | None = None) -> RunSpec:
     raw = cfg["run_specs"][name]
     models = [model_spec(model) for model in model_override] if model_override else _models_for_spec(cfg, raw)
-    prompt = RANDOM_WALK_PROMPT if raw["llm_instruct"] == "llm-next-node" else CANONICAL_PROMPT
+    prompt = raw.get("prompt", RANDOM_WALK_PROMPT if raw["llm_instruct"] == "llm-next-node" else CANONICAL_PROMPT)
     return RunSpec(
         name=name,
         prompt=prompt,
@@ -73,8 +73,9 @@ def list_run_specs(cfg: dict[str, Any]) -> str:
     lines = ["Run specs:"]
     for name, raw in cfg["run_specs"].items():
         model_source = raw.get("model_group", "inline-models")
+        prompt = raw.get("prompt", RANDOM_WALK_PROMPT if raw["llm_instruct"] == "llm-next-node" else CANONICAL_PROMPT)
         lines.append(
-            f"  {name}: prompt={RANDOM_WALK_PROMPT if raw['llm_instruct'] == 'llm-next-node' else CANONICAL_PROMPT} llm={raw['llm_instruct']} "
+            f"  {name}: prompt={prompt} llm={raw['llm_instruct']} "
             f"search={raw.get('search_instruct', 'search-base')} models={model_source}"
         )
 

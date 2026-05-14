@@ -137,8 +137,6 @@ def run_model(
 
 def run_spec(cfg: dict[str, Any], spec: RunSpec, limit: int | None = None) -> None:
     prompt_name = spec.prompt or CANONICAL_PROMPT
-    if spec.llm_instruct == "llm-next-node":
-        prompt_name = RANDOM_WALK_PROMPT
     prompt_path = resolve_path(cfg["paths"]["prompts_dir"]) / prompt_filename(prompt_name)
     questions = pd.read_csv(prompt_path)
 
