@@ -11,6 +11,19 @@ prompt_generation:
   random_name_count: 1000
   n_prompt_sets: 100
 
+name_token_check:
+  local_files_only: false
+  random_candidate_multiplier: 50
+  family_tokenizers:
+    gemma3: google/gemma-3-4b-it
+    gemma4: google/gemma-3-4b-it
+    mistral-small3.2: mistralai/Mistral-Small-3.2-24B-Instruct-2506
+    ministral-3: mistralai/Ministral-3-14B-Instruct-2512
+    qwen3: Qwen/Qwen3-8B
+    qwen3.5: Qwen/Qwen3.5-4B
+    deepseek-r1: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+    gpt-oss: openai/gpt-oss-20b
+
 prompt_conditions:
   - id: graph-social_names-baby
     graph_context: social

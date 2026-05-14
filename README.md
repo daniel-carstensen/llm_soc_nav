@@ -41,6 +41,12 @@ Regenerate canonical prompt CSVs:
 uv run python -m llm_soc_nav generate-prompts
 ```
 
+Hard-check candidate names against the actual tokenizers configured for the current model groups:
+
+```bash
+uv run python -m llm_soc_nav check-name-tokens
+```
+
 Run one experiment spec:
 
 ```bash
@@ -85,6 +91,8 @@ prompt_conditions:
 ```
 
 Condition IDs use the readable axis labels `graph-social` / `graph-generic` and `names-baby` / `names-random`. `graph_context` can be `social` or `generic`. `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings. Prompt CSV names are derived from this grid, so they do not need to be listed in the config.
+
+`name_token_check` maps each configured Ollama model family to the tokenizer to use for hard checks. The check command loads those tokenizers with `transformers`, filters baby-name and random-string candidates, and raises if any selected label is not exactly one token for every configured model tokenizer. Gated tokenizer repos require Hugging Face auth or a local tokenizer path in the config.
 
 Model groups are intentionally combinable with the task instructions:
 
