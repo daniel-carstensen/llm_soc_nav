@@ -44,7 +44,7 @@ uv run python -m llm_soc_nav generate-prompts
 Run one experiment spec:
 
 ```bash
-uv run python -m llm_soc_nav run --spec classifier_instruct_social_names
+uv run python -m llm_soc_nav run --spec classifier_instruct_graph-social_names-baby
 ```
 
 Run a group:
@@ -56,13 +56,13 @@ uv run python -m llm_soc_nav run --group path_runs
 Run random-walk next-node scoring for instruct models:
 
 ```bash
-uv run python -m llm_soc_nav run --spec next_node_instruct_social_names
+uv run python -m llm_soc_nav run --spec next_node_instruct_graph-social_names-baby
 ```
 
 Tiny smoke run with one model and two questions:
 
 ```bash
-uv run python -m llm_soc_nav run --spec classifier_instruct_social_names --limit 2 --models gemma3:4b
+uv run python -m llm_soc_nav run --spec classifier_instruct_graph-social_names-baby --limit 2 --models gemma3:4b
 ```
 
 Run tests:
@@ -79,12 +79,12 @@ Prompt conditions are the shared graph-context/name-source grid used by classifi
 
 ```yaml
 prompt_conditions:
-  - id: social_names
+  - id: graph-social_names-baby
     graph_context: social
     name_source: baby_names
 ```
 
-`graph_context` can be `social` or `generic`. `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings. Prompt CSV names are derived from this grid, so they do not need to be listed in the config.
+Condition IDs use the readable axis labels `graph-social` / `graph-generic` and `names-baby` / `names-random`. `graph_context` can be `social` or `generic`. `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings. Prompt CSV names are derived from this grid, so they do not need to be listed in the config.
 
 Model groups are intentionally combinable with the task instructions:
 
@@ -125,7 +125,7 @@ Results save outside the repo by default:
 Filenames use a simple BIDS-style convention:
 
 ```text
-model-gemma3-4b_task-llm-path_prompt-adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names_search-base_responses.csv
+model-gemma3-4b_task-llm-path_prompt-adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-social_names-baby_search-base_responses.csv
 ```
 
 Output columns include question metadata, raw model response, normalized choice, validity flag, optional thinking text, serialized logprobs, model name, and run spec.

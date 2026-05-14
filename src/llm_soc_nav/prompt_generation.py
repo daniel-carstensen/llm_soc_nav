@@ -16,8 +16,8 @@ from llm_soc_nav.prompt_templates import classifier_question, path_question, ran
 
 NAV_PROMPT_BASE = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
 RANDOM_WALK_PROMPT_BASE = "random-walk-next-node"
-CANONICAL_PROMPT = f"{NAV_PROMPT_BASE}_social-names"
-RANDOM_WALK_PROMPT = f"{RANDOM_WALK_PROMPT_BASE}_social-names"
+CANONICAL_PROMPT = f"{NAV_PROMPT_BASE}_graph-social_names-baby"
+RANDOM_WALK_PROMPT = f"{RANDOM_WALK_PROMPT_BASE}_graph-social_names-baby"
 
 PROMPT_COLUMNS = [
     "question",
@@ -47,22 +47,22 @@ def prompt_filename(prompt_name: str = CANONICAL_PROMPT) -> str:
 def default_prompt_conditions() -> list[dict[str, str]]:
     return [
         {
-            "id": "social_names",
+            "id": "graph-social_names-baby",
             "graph_context": "social",
             "name_source": "baby_names",
         },
         {
-            "id": "social_random_strings",
+            "id": "graph-social_names-random",
             "graph_context": "social",
             "name_source": "random_strings",
         },
         {
-            "id": "generic_names",
+            "id": "graph-generic_names-baby",
             "graph_context": "generic",
             "name_source": "baby_names",
         },
         {
-            "id": "generic_random_strings",
+            "id": "graph-generic_names-random",
             "graph_context": "generic",
             "name_source": "random_strings",
         },
@@ -74,8 +74,9 @@ def prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def condition_label(condition: dict[str, str]) -> str:
-    name_label = "names" if condition["name_source"] == "baby_names" else "random-strings"
-    return f"{condition['graph_context']}-{name_label}"
+    graph_label = f"graph-{condition['graph_context']}"
+    name_label = "names-baby" if condition["name_source"] == "baby_names" else "names-random"
+    return f"{graph_label}_{name_label}"
 
 
 def nav_prompt_name(condition: dict[str, str]) -> str:

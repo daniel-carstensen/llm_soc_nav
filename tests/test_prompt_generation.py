@@ -61,12 +61,12 @@ def test_prompt_conditions_include_all_graph_name_controls():
     nav_prompts = {nav_prompt_name(condition) for condition in conditions}
     walk_prompts = {random_walk_prompt_name(condition) for condition in conditions}
     assert {condition["id"] for condition in conditions} == {
-        "social_names",
-        "social_random_strings",
-        "generic_names",
-        "generic_random_strings",
+        "graph-social_names-baby",
+        "graph-social_names-random",
+        "graph-generic_names-baby",
+        "graph-generic_names-random",
     }
-    assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names" in nav_prompts
-    assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-random-strings" in nav_prompts
-    assert "random-walk-next-node_social-random-strings" in walk_prompts
-    assert "random-walk-next-node_generic-names" in walk_prompts
+    assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-social_names-baby" in nav_prompts
+    assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-generic_names-random" in nav_prompts
+    assert "random-walk-next-node_graph-social_names-random" in walk_prompts
+    assert "random-walk-next-node_graph-generic_names-baby" in walk_prompts

@@ -17,12 +17,12 @@ CFG = {
     },
     "prompt_conditions": [
         {
-            "id": "social_names",
+            "id": "graph-social_names-baby",
             "graph_context": "social",
             "name_source": "baby_names",
         },
         {
-            "id": "generic_names",
+            "id": "graph-generic_names-baby",
             "graph_context": "generic",
             "name_source": "baby_names",
         },
@@ -30,14 +30,14 @@ CFG = {
     "run_matrices": {
         "classifier": {
             "model_groups": ["instruct_llm"],
-            "prompt_conditions": ["social_names", "generic_names"],
+            "prompt_conditions": ["graph-social_names-baby", "graph-generic_names-baby"],
             "llm_instruct": "llm-classifier",
             "search_instructs": ["search-base"],
             "output_label": "llm-classifier",
         },
         "next_node": {
             "model_groups": ["instruct_llm"],
-            "prompt_conditions": ["social_names", "generic_names"],
+            "prompt_conditions": ["graph-social_names-baby", "graph-generic_names-baby"],
             "llm_instruct": "llm-next-node",
             "search_instructs": ["search-random-walk"],
             "output_label": "llm-next-node",
@@ -59,12 +59,15 @@ def test_load_run_spec_uses_model_group():
     assert [model.label for model in spec.models] == ["gemma3-4b", "qwen3-8b-no-think"]
     assert spec.models[1].prompt_prefix == "/no_think\n\n"
     assert spec.models[1].options == {"temperature": 0}
-    assert spec.prompt == "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names"
+    assert spec.prompt == "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-social_names-baby"
 
 
 def test_expand_group():
     specs = expand_specs(CFG, group="classifier_runs")
-    assert [spec.name for spec in specs] == ["classifier_instruct_generic_names", "classifier_instruct_social_names"]
+    assert [spec.name for spec in specs] == [
+        "classifier_instruct_graph-generic_names-baby",
+        "classifier_instruct_graph-social_names-baby",
+    ]
 
 
 def test_model_override_keeps_spec_otherwise_same():
@@ -78,14 +81,14 @@ def test_unknown_spec_is_rejected():
 
 
 def test_next_node_spec_uses_random_walk_prompt():
-    spec = load_run_spec(CFG, "next_node_instruct_social_names")
-    assert spec.prompt == "random-walk-next-node_social-names"
+    spec = load_run_spec(CFG, "next_node_instruct_graph-social_names-baby")
+    assert spec.prompt == "random-walk-next-node_graph-social_names-baby"
     assert spec.llm_instruct == "llm-next-node"
 
 
 def test_next_node_spec_uses_generic_prompt():
-    spec = load_run_spec(CFG, "next_node_instruct_generic_names")
-    assert spec.prompt == "random-walk-next-node_generic-names"
+    spec = load_run_spec(CFG, "next_node_instruct_graph-generic_names-baby")
+    assert spec.prompt == "random-walk-next-node_graph-generic_names-baby"
 
 
 def test_next_node_social_random_spec_uses_social_random_prompt():
@@ -93,21 +96,28 @@ def test_next_node_social_random_spec_uses_social_random_prompt():
         **CFG,
         "prompt_conditions": [
             *CFG["prompt_conditions"],
-            {"id": "social_random_strings", "graph_context": "social", "name_source": "random_strings"},
+            {"id": "graph-social_names-random", "graph_context": "social", "name_source": "random_strings"},
         ],
         "run_matrices": {
             **CFG["run_matrices"],
             "next_node": {
                 **CFG["run_matrices"]["next_node"],
-                "prompt_conditions": ["social_names", "generic_names", "social_random_strings"],
+                "prompt_conditions": [
+                    "graph-social_names-baby",
+                    "graph-generic_names-baby",
+                    "graph-social_names-random",
+                ],
             },
         },
     }
-    spec = load_run_spec(cfg, "next_node_instruct_social_random_strings")
-    assert spec.prompt == "random-walk-next-node_social-random-strings"
+    spec = load_run_spec(cfg, "next_node_instruct_graph-social_names-random")
+    assert spec.prompt == "random-walk-next-node_graph-social_names-random"
 
 
 def test_matrix_generated_next_node_specs_are_named_by_condition():
     specs = expand_specs(CFG, group="next_node_runs")
-    assert [spec.name for spec in specs] == ["next_node_instruct_generic_names", "next_node_instruct_social_names"]
-    assert specs[0].prompt == "random-walk-next-node_generic-names"
+    assert [spec.name for spec in specs] == [
+        "next_node_instruct_graph-generic_names-baby",
+        "next_node_instruct_graph-social_names-baby",
+    ]
+    assert specs[0].prompt == "random-walk-next-node_graph-generic_names-baby"
