@@ -248,17 +248,6 @@ def generate_prompts(
     return out_path
 
 
-def random_walk_prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
-    return [
-        {
-            "prompt": condition["random_walk_prompt"],
-            "graph_context": condition["graph_context"],
-            "name_source": condition["name_source"],
-        }
-        for condition in prompt_conditions(cfg)
-    ]
-
-
 def generate_random_walk_prompt(
     cfg: dict[str, Any],
     condition: dict[str, str],
@@ -293,12 +282,12 @@ def generate_random_walk_prompt(
     )
 
     prompts_dir.mkdir(parents=True, exist_ok=True)
-    out_path = prompts_dir / prompt_filename(condition["prompt"])
+    out_path = prompts_dir / prompt_filename(condition["random_walk_prompt"])
     questions.to_csv(out_path, index=False)
     return out_path
 
 
 def generate_all_prompts(cfg: dict[str, Any]) -> list[Path]:
     paths = [generate_prompts(cfg, condition) for condition in prompt_conditions(cfg)]
-    paths.extend(generate_random_walk_prompt(cfg, condition) for condition in random_walk_prompt_conditions(cfg))
+    paths.extend(generate_random_walk_prompt(cfg, condition) for condition in prompt_conditions(cfg))
     return paths

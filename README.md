@@ -59,12 +59,6 @@ Run random-walk next-node scoring for instruct models:
 uv run python -m llm_soc_nav run --spec next_node_instruct_social_names
 ```
 
-Run the two non-social next-node controls:
-
-```bash
-uv run python -m llm_soc_nav run --group next_node_control_runs
-```
-
 Tiny smoke run with one model and two questions:
 
 ```bash

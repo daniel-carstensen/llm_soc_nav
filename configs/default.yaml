@@ -130,10 +130,6 @@ run_groups:
     - next_node
   next_node_runs:
     - next_node
-  next_node_control_runs:
-    - next_node_instruct_social_random_strings
-    - next_node_instruct_generic_names
-    - next_node_instruct_generic_random_strings
   reasoning_llm_runs:
     - matrix: classifier
       model_group: reasoning_llm
