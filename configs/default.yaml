@@ -56,7 +56,7 @@ model_groups:
         top_k: 20
 
 generation:
-  top_logprobs: 64
+  top_logprobs: 20
   llm-classifier:
     num_predict: 12
     logprobs: true
