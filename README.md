@@ -44,7 +44,7 @@ uv run python -m llm_soc_nav generate-prompts
 Run one experiment spec:
 
 ```bash
-uv run python -m llm_soc_nav run --spec classifier_instruct
+uv run python -m llm_soc_nav run --spec classifier_instruct_social_names
 ```
 
 Run a group:
@@ -56,7 +56,7 @@ uv run python -m llm_soc_nav run --group path_runs
 Run random-walk next-node scoring for instruct models:
 
 ```bash
-uv run python -m llm_soc_nav run --spec next_node_instruct
+uv run python -m llm_soc_nav run --spec next_node_instruct_social_names
 ```
 
 Run the two non-social next-node controls:
@@ -68,7 +68,7 @@ uv run python -m llm_soc_nav run --group next_node_control_runs
 Tiny smoke run with one model and two questions:
 
 ```bash
-uv run python -m llm_soc_nav run --spec classifier_instruct --limit 2 --models gemma3:4b
+uv run python -m llm_soc_nav run --spec classifier_instruct_social_names --limit 2 --models gemma3:4b
 ```
 
 Run tests:
@@ -79,7 +79,7 @@ uv run pytest
 
 ## Config
 
-`configs/default.yaml` is the main editing surface. It defines raw data paths, one canonical prompt-generation setup, model groups, generation settings, named run specs, and run groups. Prompts always use shuffled adjacency lists, shuffled adjacency prompt order, shuffled choices, and one-token names.
+`configs/default.yaml` is the main editing surface. It defines raw data paths, prompt conditions, model groups, generation settings, compact run matrices, and run groups. Concrete run specs are generated from those matrices and can be inspected with `list-runs`.
 
 `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings.
 
@@ -111,10 +111,11 @@ uv run python -m llm_soc_nav run --group path_search_runs
 
 The `llm-next-node` run specs use instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API. Four random-walk conditions are generated:
 
-- `next_node_instruct`: social friendship graph with baby-name node labels.
-- `next_node_social_random_instruct`: social friendship graph with random four-character node labels.
-- `next_node_generic_names_instruct`: generic graph wording with baby-name node labels.
-- `next_node_generic_random_instruct`: generic graph wording with random four-character node labels.
+- `next_node_instruct_social_names`: social friendship graph with baby-name node labels.
+- `next_node_instruct_social_names`: social friendship graph with baby-name node labels.
+- `next_node_instruct_social_random_strings`: social friendship graph with random four-character node labels.
+- `next_node_instruct_generic_names`: generic graph wording with baby-name node labels.
+- `next_node_instruct_generic_random_strings`: generic graph wording with random four-character node labels.
 
 ## Results
 

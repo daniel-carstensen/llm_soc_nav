@@ -15,6 +15,38 @@ CFG = {
             },
         ]
     },
+    "prompt_conditions": [
+        {
+            "id": "social_names",
+            "graph_context": "social",
+            "name_source": "baby_names",
+            "nav_prompt": "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names",
+            "random_walk_prompt": "random-walk-next-node_social-names",
+        },
+        {
+            "id": "generic_names",
+            "graph_context": "generic",
+            "name_source": "baby_names",
+            "nav_prompt": "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-names",
+            "random_walk_prompt": "random-walk-next-node_generic-names",
+        },
+    ],
+    "run_matrices": {
+        "classifier": {
+            "model_groups": ["instruct_llm"],
+            "prompt_conditions": ["social_names", "generic_names"],
+            "llm_instruct": "llm-classifier",
+            "search_instructs": ["search-base"],
+            "output_label": "llm-classifier",
+        },
+        "next_node": {
+            "model_groups": ["instruct_llm"],
+            "prompt_conditions": ["social_names", "generic_names"],
+            "llm_instruct": "llm-next-node",
+            "search_instructs": ["search-random-walk"],
+            "output_label": "llm-next-node",
+        },
+    },
     "run_specs": {
         "classifier_instruct": {
             "model_group": "instruct_llm",
@@ -40,7 +72,7 @@ CFG = {
             "search_instruct": "search-random-walk",
         }
     },
-    "run_groups": {"classifier_runs": ["classifier_instruct"]},
+    "run_groups": {"classifier_runs": ["classifier"], "next_node_runs": ["next_node"]},
 }
 
 
@@ -49,12 +81,12 @@ def test_load_run_spec_uses_model_group():
     assert [model.label for model in spec.models] == ["gemma3-4b", "qwen3-8b-no-think"]
     assert spec.models[1].prompt_prefix == "/no_think\n\n"
     assert spec.models[1].options == {"temperature": 0}
-    assert spec.prompt == "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
+    assert spec.prompt == "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names"
 
 
 def test_expand_group():
     specs = expand_specs(CFG, group="classifier_runs")
-    assert [spec.name for spec in specs] == ["classifier_instruct"]
+    assert [spec.name for spec in specs] == ["classifier_instruct_generic_names", "classifier_instruct_social_names"]
 
 
 def test_model_override_keeps_spec_otherwise_same():
@@ -81,3 +113,9 @@ def test_next_node_control_spec_uses_generic_prompt():
 def test_next_node_social_random_spec_uses_social_random_prompt():
     spec = load_run_spec(CFG, "next_node_social_random_instruct")
     assert spec.prompt == "random-walk-next-node_social-random-strings"
+
+
+def test_matrix_generated_next_node_specs_are_named_by_condition():
+    specs = expand_specs(CFG, group="next_node_runs")
+    assert [spec.name for spec in specs] == ["next_node_instruct_generic_names", "next_node_instruct_social_names"]
+    assert specs[0].prompt == "random-walk-next-node_generic-names"

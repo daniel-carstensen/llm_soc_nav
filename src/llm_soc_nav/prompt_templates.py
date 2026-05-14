@@ -11,8 +11,8 @@ LLM_INSTRUCTIONS: dict[str, str] = {
     ),
     "llm-path": (
         "You will be given a problem with two possible answer options. Interpret the "
-        "problem as a graph traversal task:\nEach person is a node in a graph.\n"
-        "Each friendship is an edge connecting two nodes.\n\nThe two answer options "
+        "problem as a graph traversal task:\nEach label is a node in a graph.\n"
+        "Each listed connection is an edge connecting two nodes.\n\nThe two answer options "
         "correspond to the first node in the path from the start node to the target "
         "node. Your task is to determine which option is the correct first step on "
         "the shortest path.\n\nAfter identifying the correct option, output the full "
@@ -63,14 +63,24 @@ SEARCH_INSTRUCTIONS: dict[str, str] = {
 }
 
 
-def classifier_question(start: str, end: str, opt1: str, opt2: str) -> str:
+def classifier_question(start: str, end: str, opt1: str, opt2: str, graph_context: str = "social") -> str:
+    if graph_context == "generic":
+        return (
+            f"In the graph, what is the most efficient first step from {start} to {end}: "
+            f"{opt1} or {opt2}?"
+        )
     return (
         f"{start} wants to pass a message most efficiently to {end}, should {start} "
         f"begin by passing the message on to {opt1} or {opt2}?"
     )
 
 
-def path_question(start: str, end: str, opt1: str, opt2: str) -> str:
+def path_question(start: str, end: str, opt1: str, opt2: str, graph_context: str = "social") -> str:
+    if graph_context == "generic":
+        return (
+            f"Find the shortest path from {start} to {end}. The first step after {start} "
+            f"must be either {opt1} or {opt2}."
+        )
     return (
         f"Find the shortest path from {start} to {end}. The first step after {start} "
         f"must be either {opt1} or {opt2}."

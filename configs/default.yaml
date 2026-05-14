@@ -8,25 +8,33 @@ paths:
   results_dir: /users/dlcarste/data/llm_soc_nav/results
 
 prompt_generation:
-  name_source: baby_names   # baby_names or random_strings
   random_name_count: 1000
   n_prompt_sets: 100
 
+prompt_conditions:
+  - id: social_names
+    graph_context: social
+    name_source: baby_names
+    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names
+    random_walk_prompt: random-walk-next-node_social-names
+  - id: social_random_strings
+    graph_context: social
+    name_source: random_strings
+    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-random-strings
+    random_walk_prompt: random-walk-next-node_social-random-strings
+  - id: generic_names
+    graph_context: generic
+    name_source: baby_names
+    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-names
+    random_walk_prompt: random-walk-next-node_generic-names
+  - id: generic_random_strings
+    graph_context: generic
+    name_source: random_strings
+    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-random-strings
+    random_walk_prompt: random-walk-next-node_generic-random-strings
+
 random_walk_generation:
   prefix_lengths: [0, 1, 2, 3, 5, 8]
-  conditions:
-    - prompt: random-walk-next-node_social-names
-      graph_context: social
-      name_source: baby_names
-    - prompt: random-walk-next-node_social-random-strings
-      graph_context: social
-      name_source: random_strings
-    - prompt: random-walk-next-node_generic-names
-      graph_context: generic
-      name_source: baby_names
-    - prompt: random-walk-next-node_generic-random-strings
-      graph_context: generic
-      name_source: random_strings
 
 model_groups:
   instruct_llm:
@@ -81,117 +89,59 @@ generation:
       seed: 42
       stop: ["\n", " ", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
 
-run_specs:
-  classifier_instruct:
-    model_group: instruct_llm
+run_matrices:
+  classifier:
+    model_groups: [instruct_llm, reasoning_llm]
+    prompt_conditions: [social_names, social_random_strings, generic_names, generic_random_strings]
     llm_instruct: llm-classifier
-    search_instruct: search-base
+    search_instructs: [search-base]
     output_label: llm-classifier
-  classifier_reasoning:
-    model_group: reasoning_llm
-    llm_instruct: llm-classifier
-    search_instruct: search-base
-    output_label: llm-classifier
-  path_instruct:
-    model_group: instruct_llm
+  path:
+    model_groups: [instruct_llm, reasoning_llm]
+    prompt_conditions: [social_names, social_random_strings, generic_names, generic_random_strings]
     llm_instruct: llm-path
-    search_instruct: search-base
+    search_instructs: [search-base]
     output_label: llm-path
-  path_reasoning:
-    model_group: reasoning_llm
+  path_search:
+    model_groups: [reasoning_llm]
+    prompt_conditions: [social_names, social_random_strings]
     llm_instruct: llm-path
-    search_instruct: search-base
+    search_instructs: [search-bfs, search-sr-low-gamma, search-sr-medium-gamma, search-sr-high-gamma]
     output_label: llm-path
-  path_reasoning_bfs:
-    model_group: reasoning_llm
-    llm_instruct: llm-path
-    search_instruct: search-bfs
-    output_label: llm-path
-  path_reasoning_sr_low:
-    model_group: reasoning_llm
-    llm_instruct: llm-path
-    search_instruct: search-sr-low-gamma
-    output_label: llm-path
-  path_reasoning_sr_medium:
-    model_group: reasoning_llm
-    llm_instruct: llm-path
-    search_instruct: search-sr-medium-gamma
-    output_label: llm-path
-  path_reasoning_sr_high:
-    model_group: reasoning_llm
-    llm_instruct: llm-path
-    search_instruct: search-sr-high-gamma
-    output_label: llm-path
-  next_node_instruct:
-    model_group: instruct_llm
-    prompt: random-walk-next-node_social-names
+  next_node:
+    model_groups: [instruct_llm]
+    prompt_conditions: [social_names, social_random_strings, generic_names, generic_random_strings]
     llm_instruct: llm-next-node
-    search_instruct: search-random-walk
-    output_label: llm-next-node
-  next_node_social_random_instruct:
-    model_group: instruct_llm
-    prompt: random-walk-next-node_social-random-strings
-    llm_instruct: llm-next-node
-    search_instruct: search-random-walk
-    output_label: llm-next-node
-  next_node_generic_names_instruct:
-    model_group: instruct_llm
-    prompt: random-walk-next-node_generic-names
-    llm_instruct: llm-next-node
-    search_instruct: search-random-walk
-    output_label: llm-next-node
-  next_node_generic_random_instruct:
-    model_group: instruct_llm
-    prompt: random-walk-next-node_generic-random-strings
-    llm_instruct: llm-next-node
-    search_instruct: search-random-walk
+    search_instructs: [search-random-walk]
     output_label: llm-next-node
 
 run_groups:
   classifier_runs:
-    - classifier_instruct
-    - classifier_reasoning
+    - classifier
   path_runs:
-    - path_instruct
-    - path_reasoning
+    - path
   path_search_runs:
-    - path_reasoning_bfs
-    - path_reasoning_sr_low
-    - path_reasoning_sr_medium
-    - path_reasoning_sr_high
+    - path_search
   instruct_llm_runs:
-    - classifier_instruct
-    - path_instruct
-    - next_node_instruct
-    - next_node_social_random_instruct
-    - next_node_generic_names_instruct
-    - next_node_generic_random_instruct
+    - matrix: classifier
+      model_group: instruct_llm
+    - matrix: path
+      model_group: instruct_llm
+    - next_node
   next_node_runs:
-    - next_node_instruct
-    - next_node_social_random_instruct
-    - next_node_generic_names_instruct
-    - next_node_generic_random_instruct
+    - next_node
   next_node_control_runs:
-    - next_node_social_random_instruct
-    - next_node_generic_names_instruct
-    - next_node_generic_random_instruct
+    - next_node_instruct_social_random_strings
+    - next_node_instruct_generic_names
+    - next_node_instruct_generic_random_strings
   reasoning_llm_runs:
-    - classifier_reasoning
-    - path_reasoning
-    - path_reasoning_bfs
-    - path_reasoning_sr_low
-    - path_reasoning_sr_medium
-    - path_reasoning_sr_high
+    - matrix: classifier
+      model_group: reasoning_llm
+    - matrix: path
+      model_group: reasoning_llm
+    - path_search
   all:
-    - classifier_instruct
-    - classifier_reasoning
-    - path_instruct
-    - path_reasoning
-    - path_reasoning_bfs
-    - path_reasoning_sr_low
-    - path_reasoning_sr_medium
-    - path_reasoning_sr_high
-    - next_node_instruct
-    - next_node_social_random_instruct
-    - next_node_generic_names_instruct
-    - next_node_generic_random_instruct
+    - classifier
+    - path
+    - path_search
+    - next_node

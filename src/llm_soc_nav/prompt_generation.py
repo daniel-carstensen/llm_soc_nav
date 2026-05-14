@@ -14,7 +14,12 @@ from llm_soc_nav.graph import SOCIAL_GRAPH, graph_sentences
 from llm_soc_nav.names import select_names
 from llm_soc_nav.prompt_templates import classifier_question, path_question, random_walk_question
 
-CANONICAL_PROMPT = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
+NAV_PROMPT_BASE = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
+NAV_SOCIAL_NAMES_PROMPT = f"{NAV_PROMPT_BASE}_social-names"
+NAV_SOCIAL_RANDOM_PROMPT = f"{NAV_PROMPT_BASE}_social-random-strings"
+NAV_GENERIC_NAMES_PROMPT = f"{NAV_PROMPT_BASE}_generic-names"
+NAV_GENERIC_RANDOM_PROMPT = f"{NAV_PROMPT_BASE}_generic-random-strings"
+CANONICAL_PROMPT = NAV_SOCIAL_NAMES_PROMPT
 RANDOM_WALK_SOCIAL_NAMES_PROMPT = "random-walk-next-node_social-names"
 RANDOM_WALK_SOCIAL_RANDOM_PROMPT = "random-walk-next-node_social-random-strings"
 RANDOM_WALK_GENERIC_NAMES_PROMPT = "random-walk-next-node_generic-names"
@@ -44,6 +49,43 @@ class PromptSettings:
 
 def prompt_filename(prompt_name: str = CANONICAL_PROMPT) -> str:
     return f"questions_{prompt_name}.csv"
+
+
+def default_prompt_conditions() -> list[dict[str, str]]:
+    return [
+        {
+            "id": "social_names",
+            "graph_context": "social",
+            "name_source": "baby_names",
+            "nav_prompt": NAV_SOCIAL_NAMES_PROMPT,
+            "random_walk_prompt": RANDOM_WALK_SOCIAL_NAMES_PROMPT,
+        },
+        {
+            "id": "social_random_strings",
+            "graph_context": "social",
+            "name_source": "random_strings",
+            "nav_prompt": NAV_SOCIAL_RANDOM_PROMPT,
+            "random_walk_prompt": RANDOM_WALK_SOCIAL_RANDOM_PROMPT,
+        },
+        {
+            "id": "generic_names",
+            "graph_context": "generic",
+            "name_source": "baby_names",
+            "nav_prompt": NAV_GENERIC_NAMES_PROMPT,
+            "random_walk_prompt": RANDOM_WALK_GENERIC_NAMES_PROMPT,
+        },
+        {
+            "id": "generic_random_strings",
+            "graph_context": "generic",
+            "name_source": "random_strings",
+            "nav_prompt": NAV_GENERIC_RANDOM_PROMPT,
+            "random_walk_prompt": RANDOM_WALK_GENERIC_RANDOM_PROMPT,
+        },
+    ]
+
+
+def prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
+    return list(cfg.get("prompt_conditions", default_prompt_conditions()))
 
 
 def generate_adjacency_sets(
@@ -88,8 +130,12 @@ def generate_questions(
             base_prompt = " ".join(prompt_sentences)
             rows.append(
                 {
-                    "question": " ".join([base_prompt, classifier_question(start, end, options[0], options[1])]),
-                    "path_question": " ".join([base_prompt, path_question(start, end, options[0], options[1])]),
+                    "question": " ".join(
+                        [base_prompt, classifier_question(start, end, options[0], options[1], settings.graph_context)]
+                    ),
+                    "path_question": " ".join(
+                        [base_prompt, path_question(start, end, options[0], options[1], settings.graph_context)]
+                    ),
                     "startpoint": start,
                     "endpoint": end,
                     "opt1": options[0],
@@ -171,15 +217,16 @@ def generate_random_walk_questions(
 
 def generate_prompts(
     cfg: dict[str, Any],
+    condition: dict[str, str],
     output_dir: str | Path | None = None,
 ) -> Path:
     seed = int(cfg.get("seed", 42))
     prompt_cfg = cfg.get("prompt_generation", {})
     settings = PromptSettings(
         n_prompt_sets=int(prompt_cfg.get("n_prompt_sets", 100)),
-        name_source=prompt_cfg.get("name_source", "baby_names"),
+        name_source=condition["name_source"],
         random_name_count=int(prompt_cfg.get("random_name_count", 1000)),
-        graph_context="social",
+        graph_context=condition["graph_context"],
     )
     raw_paths = cfg["paths"]["raw"]
     prompts_dir = resolve_path(output_dir or cfg["paths"]["prompts_dir"])
@@ -196,42 +243,20 @@ def generate_prompts(
     questions = generate_questions(adjacency_sets, tasks, settings, seed)
 
     prompts_dir.mkdir(parents=True, exist_ok=True)
-    out_path = prompts_dir / prompt_filename()
+    out_path = prompts_dir / prompt_filename(condition["nav_prompt"])
     questions.to_csv(out_path, index=False)
     return out_path
 
 
 def random_walk_prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
-    return list(
-        cfg.get(
-            "random_walk_generation",
-            {},
-        ).get(
-            "conditions",
-            [
-                {
-                    "prompt": RANDOM_WALK_SOCIAL_NAMES_PROMPT,
-                    "graph_context": "social",
-                    "name_source": "baby_names",
-                },
-                {
-                    "prompt": RANDOM_WALK_SOCIAL_RANDOM_PROMPT,
-                    "graph_context": "social",
-                    "name_source": "random_strings",
-                },
-                {
-                    "prompt": RANDOM_WALK_GENERIC_NAMES_PROMPT,
-                    "graph_context": "generic",
-                    "name_source": "baby_names",
-                },
-                {
-                    "prompt": RANDOM_WALK_GENERIC_RANDOM_PROMPT,
-                    "graph_context": "generic",
-                    "name_source": "random_strings",
-                },
-            ],
-        )
-    )
+    return [
+        {
+            "prompt": condition["random_walk_prompt"],
+            "graph_context": condition["graph_context"],
+            "name_source": condition["name_source"],
+        }
+        for condition in prompt_conditions(cfg)
+    ]
 
 
 def generate_random_walk_prompt(
@@ -274,6 +299,6 @@ def generate_random_walk_prompt(
 
 
 def generate_all_prompts(cfg: dict[str, Any]) -> list[Path]:
-    paths = [generate_prompts(cfg)]
+    paths = [generate_prompts(cfg, condition) for condition in prompt_conditions(cfg)]
     paths.extend(generate_random_walk_prompt(cfg, condition) for condition in random_walk_prompt_conditions(cfg))
     return paths
