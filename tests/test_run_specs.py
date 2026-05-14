@@ -20,15 +20,11 @@ CFG = {
             "id": "social_names",
             "graph_context": "social",
             "name_source": "baby_names",
-            "nav_prompt": "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names",
-            "random_walk_prompt": "random-walk-next-node_social-names",
         },
         {
             "id": "generic_names",
             "graph_context": "generic",
             "name_source": "baby_names",
-            "nav_prompt": "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-names",
-            "random_walk_prompt": "random-walk-next-node_generic-names",
         },
     ],
     "run_matrices": {
@@ -53,24 +49,6 @@ CFG = {
             "llm_instruct": "llm-classifier",
             "search_instruct": "search-base",
         },
-        "next_node_instruct": {
-            "model_group": "instruct_llm",
-            "prompt": "random-walk-next-node_social-names",
-            "llm_instruct": "llm-next-node",
-            "search_instruct": "search-random-walk",
-        },
-        "next_node_social_random_instruct": {
-            "model_group": "instruct_llm",
-            "prompt": "random-walk-next-node_social-random-strings",
-            "llm_instruct": "llm-next-node",
-            "search_instruct": "search-random-walk",
-        },
-        "next_node_generic_names_instruct": {
-            "model_group": "instruct_llm",
-            "prompt": "random-walk-next-node_generic-names",
-            "llm_instruct": "llm-next-node",
-            "search_instruct": "search-random-walk",
-        }
     },
     "run_groups": {"classifier_runs": ["classifier"], "next_node_runs": ["next_node"]},
 }
@@ -100,18 +78,32 @@ def test_unknown_spec_is_rejected():
 
 
 def test_next_node_spec_uses_random_walk_prompt():
-    spec = load_run_spec(CFG, "next_node_instruct")
+    spec = load_run_spec(CFG, "next_node_instruct_social_names")
     assert spec.prompt == "random-walk-next-node_social-names"
     assert spec.llm_instruct == "llm-next-node"
 
 
-def test_next_node_control_spec_uses_generic_prompt():
-    spec = load_run_spec(CFG, "next_node_generic_names_instruct")
+def test_next_node_spec_uses_generic_prompt():
+    spec = load_run_spec(CFG, "next_node_instruct_generic_names")
     assert spec.prompt == "random-walk-next-node_generic-names"
 
 
 def test_next_node_social_random_spec_uses_social_random_prompt():
-    spec = load_run_spec(CFG, "next_node_social_random_instruct")
+    cfg = {
+        **CFG,
+        "prompt_conditions": [
+            *CFG["prompt_conditions"],
+            {"id": "social_random_strings", "graph_context": "social", "name_source": "random_strings"},
+        ],
+        "run_matrices": {
+            **CFG["run_matrices"],
+            "next_node": {
+                **CFG["run_matrices"]["next_node"],
+                "prompt_conditions": ["social_names", "generic_names", "social_random_strings"],
+            },
+        },
+    }
+    spec = load_run_spec(cfg, "next_node_instruct_social_random_strings")
     assert spec.prompt == "random-walk-next-node_social-random-strings"
 
 

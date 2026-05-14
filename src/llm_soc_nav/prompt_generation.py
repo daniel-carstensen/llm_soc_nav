@@ -15,16 +15,9 @@ from llm_soc_nav.names import select_names
 from llm_soc_nav.prompt_templates import classifier_question, path_question, random_walk_question
 
 NAV_PROMPT_BASE = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
-NAV_SOCIAL_NAMES_PROMPT = f"{NAV_PROMPT_BASE}_social-names"
-NAV_SOCIAL_RANDOM_PROMPT = f"{NAV_PROMPT_BASE}_social-random-strings"
-NAV_GENERIC_NAMES_PROMPT = f"{NAV_PROMPT_BASE}_generic-names"
-NAV_GENERIC_RANDOM_PROMPT = f"{NAV_PROMPT_BASE}_generic-random-strings"
-CANONICAL_PROMPT = NAV_SOCIAL_NAMES_PROMPT
-RANDOM_WALK_SOCIAL_NAMES_PROMPT = "random-walk-next-node_social-names"
-RANDOM_WALK_SOCIAL_RANDOM_PROMPT = "random-walk-next-node_social-random-strings"
-RANDOM_WALK_GENERIC_NAMES_PROMPT = "random-walk-next-node_generic-names"
-RANDOM_WALK_GENERIC_RANDOM_PROMPT = "random-walk-next-node_generic-random-strings"
-RANDOM_WALK_PROMPT = RANDOM_WALK_SOCIAL_NAMES_PROMPT
+RANDOM_WALK_PROMPT_BASE = "random-walk-next-node"
+CANONICAL_PROMPT = f"{NAV_PROMPT_BASE}_social-names"
+RANDOM_WALK_PROMPT = f"{RANDOM_WALK_PROMPT_BASE}_social-names"
 
 PROMPT_COLUMNS = [
     "question",
@@ -57,35 +50,40 @@ def default_prompt_conditions() -> list[dict[str, str]]:
             "id": "social_names",
             "graph_context": "social",
             "name_source": "baby_names",
-            "nav_prompt": NAV_SOCIAL_NAMES_PROMPT,
-            "random_walk_prompt": RANDOM_WALK_SOCIAL_NAMES_PROMPT,
         },
         {
             "id": "social_random_strings",
             "graph_context": "social",
             "name_source": "random_strings",
-            "nav_prompt": NAV_SOCIAL_RANDOM_PROMPT,
-            "random_walk_prompt": RANDOM_WALK_SOCIAL_RANDOM_PROMPT,
         },
         {
             "id": "generic_names",
             "graph_context": "generic",
             "name_source": "baby_names",
-            "nav_prompt": NAV_GENERIC_NAMES_PROMPT,
-            "random_walk_prompt": RANDOM_WALK_GENERIC_NAMES_PROMPT,
         },
         {
             "id": "generic_random_strings",
             "graph_context": "generic",
             "name_source": "random_strings",
-            "nav_prompt": NAV_GENERIC_RANDOM_PROMPT,
-            "random_walk_prompt": RANDOM_WALK_GENERIC_RANDOM_PROMPT,
         },
     ]
 
 
 def prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
     return list(cfg.get("prompt_conditions", default_prompt_conditions()))
+
+
+def condition_label(condition: dict[str, str]) -> str:
+    name_label = "names" if condition["name_source"] == "baby_names" else "random-strings"
+    return f"{condition['graph_context']}-{name_label}"
+
+
+def nav_prompt_name(condition: dict[str, str]) -> str:
+    return f"{NAV_PROMPT_BASE}_{condition_label(condition)}"
+
+
+def random_walk_prompt_name(condition: dict[str, str]) -> str:
+    return f"{RANDOM_WALK_PROMPT_BASE}_{condition_label(condition)}"
 
 
 def generate_adjacency_sets(
@@ -243,7 +241,7 @@ def generate_prompts(
     questions = generate_questions(adjacency_sets, tasks, settings, seed)
 
     prompts_dir.mkdir(parents=True, exist_ok=True)
-    out_path = prompts_dir / prompt_filename(condition["nav_prompt"])
+    out_path = prompts_dir / prompt_filename(nav_prompt_name(condition))
     questions.to_csv(out_path, index=False)
     return out_path
 
@@ -282,7 +280,7 @@ def generate_random_walk_prompt(
     )
 
     prompts_dir.mkdir(parents=True, exist_ok=True)
-    out_path = prompts_dir / prompt_filename(condition["random_walk_prompt"])
+    out_path = prompts_dir / prompt_filename(random_walk_prompt_name(condition))
     questions.to_csv(out_path, index=False)
     return out_path
 

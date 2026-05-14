@@ -75,7 +75,16 @@ uv run pytest
 
 `configs/default.yaml` is the main editing surface. It defines raw data paths, prompt conditions, model groups, generation settings, compact run matrices, and run groups. Concrete run specs are generated from those matrices and can be inspected with `list-runs`.
 
-`name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings.
+Prompt conditions are the shared graph-context/name-source grid used by classifier, path, path-search, and next-node tasks:
+
+```yaml
+prompt_conditions:
+  - id: social_names
+    graph_context: social
+    name_source: baby_names
+```
+
+`graph_context` can be `social` or `generic`. `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings. Prompt CSV names are derived from this grid, so they do not need to be listed in the config.
 
 Model groups are intentionally combinable with the task instructions:
 
@@ -103,13 +112,7 @@ Search instructions are only applied to `llm-path` runs. Use `path_search_runs` 
 uv run python -m llm_soc_nav run --group path_search_runs
 ```
 
-The `llm-next-node` run specs use instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API. Four random-walk conditions are generated:
-
-- `next_node_instruct_social_names`: social friendship graph with baby-name node labels.
-- `next_node_instruct_social_names`: social friendship graph with baby-name node labels.
-- `next_node_instruct_social_random_strings`: social friendship graph with random four-character node labels.
-- `next_node_instruct_generic_names`: generic graph wording with baby-name node labels.
-- `next_node_instruct_generic_random_strings`: generic graph wording with random four-character node labels.
+The `llm-next-node` run specs use instruct models only. Prompt generation creates random-walk prefixes with configurable lengths, such as `[0, 1, 2, 3, 5, 8]`, and records candidate logprobs for all graph node labels returned by the API. These specs use the same prompt-condition grid as the classifier and path tasks.
 
 ## Results
 
@@ -122,7 +125,7 @@ Results save outside the repo by default:
 Filenames use a simple BIDS-style convention:
 
 ```text
-model-gemma3-4b_task-llm-path_prompt-adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_search-base_responses.csv
+model-gemma3-4b_task-llm-path_prompt-adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names_search-base_responses.csv
 ```
 
 Output columns include question metadata, raw model response, normalized choice, validity flag, optional thinking text, serialized logprobs, model name, and run spec.

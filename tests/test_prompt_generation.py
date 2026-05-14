@@ -5,7 +5,9 @@ from llm_soc_nav.prompt_generation import (
     PromptSettings,
     generate_questions,
     generate_random_walk_questions,
+    nav_prompt_name,
     prompt_conditions,
+    random_walk_prompt_name,
 )
 
 
@@ -56,8 +58,14 @@ def test_generate_random_walk_questions_uses_configurable_prefix_lengths():
 
 def test_prompt_conditions_include_all_graph_name_controls():
     conditions = prompt_conditions({})
-    nav_prompts = {condition["nav_prompt"] for condition in conditions}
-    walk_prompts = {condition["random_walk_prompt"] for condition in conditions}
+    nav_prompts = {nav_prompt_name(condition) for condition in conditions}
+    walk_prompts = {random_walk_prompt_name(condition) for condition in conditions}
+    assert {condition["id"] for condition in conditions} == {
+        "social_names",
+        "social_random_strings",
+        "generic_names",
+        "generic_random_strings",
+    }
     assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names" in nav_prompts
     assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-random-strings" in nav_prompts
     assert "random-walk-next-node_social-random-strings" in walk_prompts

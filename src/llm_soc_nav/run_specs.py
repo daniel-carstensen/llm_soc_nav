@@ -5,7 +5,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from llm_soc_nav.prompt_generation import CANONICAL_PROMPT, RANDOM_WALK_PROMPT, prompt_conditions
+from llm_soc_nav.prompt_generation import (
+    CANONICAL_PROMPT,
+    RANDOM_WALK_PROMPT,
+    nav_prompt_name,
+    prompt_conditions,
+    random_walk_prompt_name,
+)
 
 
 @dataclass(frozen=True)
@@ -65,7 +71,11 @@ def build_matrix_specs(cfg: dict[str, Any], task_name: str, matrix: dict[str, An
         models = [model_spec(model) for model in cfg["model_groups"][model_group]]
         for condition_id in condition_ids:
             condition = conditions_by_id[condition_id]
-            prompt = condition["random_walk_prompt"] if matrix["llm_instruct"] == "llm-next-node" else condition["nav_prompt"]
+            prompt = (
+                random_walk_prompt_name(condition)
+                if matrix["llm_instruct"] == "llm-next-node"
+                else nav_prompt_name(condition)
+            )
             for search_instruct in matrix.get("search_instructs", ["search-base"]):
                 parts = [task_name, model_group_alias(model_group), condition_id]
                 if search_instruct not in {"search-base", "search-random-walk"}:

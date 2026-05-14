@@ -15,23 +15,15 @@ prompt_conditions:
   - id: social_names
     graph_context: social
     name_source: baby_names
-    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-names
-    random_walk_prompt: random-walk-next-node_social-names
   - id: social_random_strings
     graph_context: social
     name_source: random_strings
-    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_social-random-strings
-    random_walk_prompt: random-walk-next-node_social-random-strings
   - id: generic_names
     graph_context: generic
     name_source: baby_names
-    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-names
-    random_walk_prompt: random-walk-next-node_generic-names
   - id: generic_random_strings
     graph_context: generic
     name_source: random_strings
-    nav_prompt: adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_generic-random-strings
-    random_walk_prompt: random-walk-next-node_generic-random-strings
 
 random_walk_generation:
   prefix_lengths: [0, 1, 2, 3, 5, 8]
