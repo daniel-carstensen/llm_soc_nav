@@ -164,15 +164,24 @@ def list_run_specs(cfg: dict[str, Any]) -> str:
     for name in cfg.get("run_specs", {}):
         specs[name] = load_run_spec(cfg, name)
 
-    lines = ["Run specs:"]
-    for name in sorted(specs):
+    sorted_names = sorted(specs)
+    name_w = max((len(n) for n in sorted_names), default=4)
+    llm_w = max((len(specs[n].llm_instruct) for n in sorted_names), default=3)
+    search_w = max((len(specs[n].search_instruct) for n in sorted_names), default=6)
+
+    header = f"  {'NAME':<{name_w}}  {'LLM':<{llm_w}}  {'SEARCH':<{search_w}}  MODELS"
+    sep = "  " + "-" * (name_w + llm_w + search_w + 14)
+    lines = ["Run specs:", header, sep]
+    for name in sorted_names:
         spec = specs[name]
         lines.append(
-            f"  {name}: prompt={spec.prompt} llm={spec.llm_instruct} "
-            f"search={spec.search_instruct} models={len(spec.models)}"
+            f"  {name:<{name_w}}  {spec.llm_instruct:<{llm_w}}  {spec.search_instruct:<{search_w}}  {len(spec.models)}"
         )
 
     lines.append("\nRun groups:")
-    for name in cfg["run_groups"]:
-        lines.append(f"  {name}: {', '.join(group_spec_names(cfg, name))}")
+    for group_name in cfg["run_groups"]:
+        group_specs = group_spec_names(cfg, group_name)
+        lines.append(f"  {group_name} ({len(group_specs)}):")
+        for spec_name in group_specs:
+            lines.append(f"    {spec_name}")
     return "\n".join(lines)

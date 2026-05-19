@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --error=logs/%x-%j.err
 
@@ -16,7 +16,7 @@ mkdir -p logs
 
 # --- site-specific environment setup ---
 module purge
-module load ollama/0.17.7
+module load ollama/0.21.0-llj6
 
 if ! command -v uv >/dev/null 2>&1; then
     echo "uv is not available on PATH" >&2
@@ -74,4 +74,4 @@ if [[ "${ready}" -ne 1 ]]; then
 fi
 
 # Edit --spec or --group for the desired experiment.
-srun uv run python -m llm_soc_nav run --spec path_reasoning
+srun uv run python -m llm_soc_nav run --group instruct_llm_runs

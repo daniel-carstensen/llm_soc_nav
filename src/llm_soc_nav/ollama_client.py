@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+import sys
 from typing import Any, Protocol
 
 import pandas as pd
@@ -57,7 +59,7 @@ def build_model_prompt(row: pd.Series, spec: RunSpec, model: ModelSpec | None = 
 
     prompt = f"{llm_instruction}{question}\n\n{search_instruction}".strip("\n")
     if model and model.prompt_prefix:
-        prompt = f"{model.prompt_prefix}{prompt}"
+        prompt = f"{model.prompt_prefix}\n{prompt}"
     return prompt
 
 
@@ -81,6 +83,13 @@ def call_ollama(
 
         client = ollama
 
+    # `think` is a top-level Ollama API field, not a model option.
+    # Extract it so it is not silently ignored when nested inside `options`.
+    options = dict(options)
+    kwargs: dict[str, Any] = {}
+    if "think" in options:
+        kwargs["think"] = options.pop("think")
+
     if use_logprobs:
         return client.generate(
             model=model,
@@ -88,8 +97,9 @@ def call_ollama(
             logprobs=True,
             top_logprobs=top_logprobs,
             options=options,
+            **kwargs,
         )
-    return client.generate(model=model, prompt=prompt, options=options)
+    return client.generate(model=model, prompt=prompt, options=options, **kwargs)
 
 
 def run_model(
@@ -107,6 +117,7 @@ def run_model(
         questions = questions.iloc[:limit, :]
 
     records: list[dict[str, Any]] = []
+    t_start = time.monotonic()
     for i, row in questions.iterrows():
         prompt = build_model_prompt(row, spec, model)
         options = build_generation_options(generation, model)
@@ -123,7 +134,19 @@ def run_model(
         record["model_label"] = model.label
         record["spec"] = spec.name
         records.append(record)
-        print(f"  [{len(records)}/{len(questions)}] {record['raw_response']!r:>12}")
+        n = len(questions)
+        if sys.stdout.isatty():
+            print(f"  [{len(records)}/{n}] response={record['raw_response']!r}  thinking={record.get('thinking', '')!r:.40}")
+            if not record['raw_response']:
+                print(f"    [DEBUG] full resp: {resp}")
+        else:
+            milestone = max(1, n // 10)
+            if len(records) % milestone == 0 or len(records) == n:
+                elapsed = time.monotonic() - t_start
+                avg_per_row = elapsed / len(records)
+                remaining = avg_per_row * (n - len(records))
+                eta_str = time.strftime("%H:%M:%S", time.gmtime(remaining))
+                print(f"  [{len(records)}/{n}] {100 * len(records) / n:.0f}%  ETA {eta_str}")
 
     results = pd.DataFrame(records)
     out_path = result_path(cfg, model.label, spec.output_label, spec.prompt, spec.search_instruct)

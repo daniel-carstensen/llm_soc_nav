@@ -27,14 +27,6 @@ def load_unique_baby_names(path: str | Path) -> list[str]:
     )
 
 
-def filter_similar_names(names: Iterable[str], threshold: float = 0.80) -> list[str]:
-    kept: list[str] = []
-    for name in names:
-        if not any(SequenceMatcher(None, name, old).ratio() > threshold for old in kept):
-            kept.append(name)
-    return kept
-
-
 def token_ids(tokenizer: TokenizerLike, text: str) -> list[int]:
     try:
         return list(tokenizer.encode(text, add_special_tokens=False))
@@ -48,7 +40,7 @@ def is_one_token_for_all(name: str, model_tokenizers: dict[str, TokenizerLike]) 
 
 def filter_one_token_names(
     names: Iterable[str],
-    max_chars: int = 4,
+    max_chars: int = 12,
     model_tokenizers: dict[str, TokenizerLike] | None = None,
 ) -> list[str]:
     """Simple tokenizer-free one-token proxy for cluster-friendly prompt generation."""
@@ -61,11 +53,11 @@ def filter_one_token_names(
 def assert_one_token_names(names: Iterable[str], model_tokenizers: dict[str, TokenizerLike]) -> None:
     failures: list[str] = []
     for name in names:
-        bad_models = [
-            model
-            for model, tokenizer in model_tokenizers.items()
-            if len(token_ids(tokenizer, name)) != 1
-        ]
+        bad_models = []
+        for model, tokenizer in model_tokenizers.items():
+            if len(token_ids(tokenizer, name)) != 1:
+                bad_models.append(model)
+                break
         if bad_models:
             failures.append(f"{name}: {', '.join(bad_models)}")
 
@@ -90,7 +82,7 @@ def select_names(
     random_count: int = 1000,
     seed: int = 42,
     model_tokenizers: dict[str, TokenizerLike] | None = None,
-    random_candidate_multiplier: int = 50,
+    random_candidate_multiplier: int = 1000,
 ) -> list[str]:
     if source == "random_strings":
         candidate_count = random_count if not model_tokenizers else random_count * random_candidate_multiplier
@@ -98,6 +90,8 @@ def select_names(
             generate_random_names(candidate_count, seed=seed),
             model_tokenizers=model_tokenizers,
         )
+        baby_name_set = set(load_unique_baby_names(baby_names_path))
+        names = [n for n in names if n not in baby_name_set]
         if len(names) < random_count:
             raise ValueError(
                 f"Only {len(names)} random names were one token for all configured tokenizers; "
@@ -108,7 +102,14 @@ def select_names(
         raise ValueError("name_source must be 'baby_names' or 'random_strings'.")
 
     names = load_unique_baby_names(baby_names_path)
-    return filter_similar_names(filter_one_token_names(names, model_tokenizers=model_tokenizers))
+    return filter_one_token_names(names, model_tokenizers=model_tokenizers)
+
+
+def names_paths(cfg: dict[str, Any]) -> tuple[Path, Path]:
+    from llm_soc_nav.config import resolve_path
+
+    names_dir = resolve_path(cfg["paths"]["names_dir"])
+    return names_dir / "baby_names.csv", names_dir / "random_strings.csv"
 
 
 def configured_model_names(cfg: dict[str, Any]) -> list[str]:
@@ -160,10 +161,14 @@ def load_model_tokenizers(cfg: dict[str, Any]) -> dict[str, TokenizerLike]:
     tokenizers: dict[str, TokenizerLike] = {}
     for model_name, tokenizer_ref in tokenizer_refs_for_config(cfg).items():
         try:
+            extra_kwargs: dict[str, Any] = {}
+            if "mistral" in tokenizer_ref.lower():
+                extra_kwargs["fix_mistral_regex"] = True
             tokenizers[model_name] = AutoTokenizer.from_pretrained(
                 tokenizer_ref,
                 local_files_only=local_files_only,
                 trust_remote_code=True,
+                **extra_kwargs,
             )
         except Exception as exc:
             raise RuntimeError(
@@ -174,7 +179,7 @@ def load_model_tokenizers(cfg: dict[str, Any]) -> dict[str, TokenizerLike]:
     return tokenizers
 
 
-def check_config_name_tokens(cfg: dict[str, Any]) -> dict[str, int]:
+def save_names(cfg: dict[str, Any]) -> dict[str, int]:
     from llm_soc_nav.config import resolve_path
 
     model_tokenizers = load_model_tokenizers(cfg)
@@ -184,8 +189,9 @@ def check_config_name_tokens(cfg: dict[str, Any]) -> dict[str, int]:
     baby_names_path = resolve_path(raw_paths["baby_names"])
     random_count = int(prompt_cfg.get("random_name_count", 1000))
     seed = int(cfg.get("seed", 42))
-    random_candidate_multiplier = int(check_cfg.get("random_candidate_multiplier", 50))
+    random_candidate_multiplier = int(check_cfg.get("random_candidate_multiplier", 1000))
 
+    print(f"Selecting baby names from {baby_names_path}...")
     baby_names = select_names(
         baby_names_path,
         source="baby_names",
@@ -193,6 +199,7 @@ def check_config_name_tokens(cfg: dict[str, Any]) -> dict[str, int]:
         model_tokenizers=model_tokenizers,
         random_candidate_multiplier=random_candidate_multiplier,
     )
+    print(f"Selecting random string names...")
     random_names = select_names(
         baby_names_path,
         source="random_strings",
@@ -201,6 +208,30 @@ def check_config_name_tokens(cfg: dict[str, Any]) -> dict[str, int]:
         model_tokenizers=model_tokenizers,
         random_candidate_multiplier=random_candidate_multiplier,
     )
+
+    baby_path, random_path = names_paths(cfg)
+    baby_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"name": baby_names}).to_csv(baby_path, index=False)
+    pd.DataFrame({"name": random_names}).to_csv(random_path, index=False)
+    return {
+        "baby_names": len(baby_names),
+        "random_strings": len(random_names),
+        "models": len(model_tokenizers),
+    }
+
+
+def check_config_name_tokens(cfg: dict[str, Any]) -> dict[str, int]:
+    baby_path, random_path = names_paths(cfg)
+    missing = [p for p in (baby_path, random_path) if not p.exists()]
+    if missing:
+        raise FileNotFoundError(
+            f"Name CSV(s) not found: {', '.join(str(p) for p in missing)}. "
+            "Run 'save-names' first to generate them."
+        )
+
+    model_tokenizers = load_model_tokenizers(cfg)
+    baby_names = pd.read_csv(baby_path)["name"].tolist()
+    random_names = pd.read_csv(random_path)["name"].tolist()
 
     assert_one_token_names(baby_names, model_tokenizers)
     assert_one_token_names(random_names, model_tokenizers)

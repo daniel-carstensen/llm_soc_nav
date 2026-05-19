@@ -11,7 +11,7 @@ import pandas as pd
 
 from llm_soc_nav.config import resolve_path
 from llm_soc_nav.graph import SOCIAL_GRAPH, graph_sentences
-from llm_soc_nav.names import select_names
+from llm_soc_nav.names import names_paths, select_names
 from llm_soc_nav.prompt_templates import classifier_question, path_question, random_walk_question
 
 NAV_PROMPT_BASE = "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled"
@@ -164,12 +164,13 @@ RANDOM_WALK_COLUMNS = [
 ]
 
 
-def sample_walk(names: list[str], start_id: int, prefix_length: int, rng: np.random.Generator) -> list[str]:
-    node_id = start_id
+def sample_walk(names: list[str], current_id: int, prefix_length: int, rng: np.random.Generator) -> list[str]:
+    node_id = current_id
     path_ids = [node_id]
     for _ in range(prefix_length):
         node_id = int(rng.choice(SOCIAL_GRAPH[node_id]))
         path_ids.append(node_id)
+    path_ids.reverse()
     return [names[i] for i in path_ids]
 
 
@@ -187,10 +188,9 @@ def generate_random_walk_questions(
     for prompt_id, (sentences, names) in enumerate(adjacency_sets):
         all_nodes = list(names)
         graph_text = " ".join(sentences)
-        for start_id in range(len(SOCIAL_GRAPH)):
+        for current_id in range(len(SOCIAL_GRAPH)):
             for prefix_length in prefix_lengths:
-                path = sample_walk(names, start_id, prefix_length, rng)
-                current_id = names.index(path[-1])
+                path = sample_walk(names, current_id, prefix_length, rng)
                 valid_next_nodes = [names[i] for i in SOCIAL_GRAPH[current_id]]
                 sampled_next_node = str(rng.choice(valid_next_nodes))
                 rows.append(
@@ -211,7 +211,13 @@ def generate_random_walk_questions(
                 )
                 walk_id += 1
 
-    return pd.DataFrame(rows, columns=RANDOM_WALK_COLUMNS)
+    df = pd.DataFrame(rows, columns=RANDOM_WALK_COLUMNS)
+    for pid, group in df.groupby("prompt_id"):
+        counts = group["current_node"].value_counts()
+        assert counts.nunique() == 1, (
+            f"current_node counts are not balanced in prompt_id={pid}: {counts.to_dict()}"
+        )
+    return df
 
 
 def generate_prompts(
@@ -230,12 +236,13 @@ def generate_prompts(
     raw_paths = cfg["paths"]["raw"]
     prompts_dir = resolve_path(output_dir or cfg["paths"]["prompts_dir"])
 
-    names = select_names(
-        resolve_path(raw_paths["baby_names"]),
-        source=settings.name_source,
-        random_count=settings.random_name_count,
-        seed=seed,
-    )
+    baby_path, random_path = names_paths(cfg)
+    names_path = baby_path if settings.name_source == "baby_names" else random_path
+    if not names_path.exists():
+        raise FileNotFoundError(
+            f"Name CSV not found: {names_path}. Run 'save-names' first."
+        )
+    names = pd.read_csv(names_path)["name"].tolist()
     tasks = pd.read_csv(resolve_path(raw_paths["tasks"]))
 
     adjacency_sets = generate_adjacency_sets(names, settings, seed)
@@ -264,12 +271,13 @@ def generate_random_walk_prompt(
     raw_paths = cfg["paths"]["raw"]
     prompts_dir = resolve_path(output_dir or cfg["paths"]["prompts_dir"])
 
-    names = select_names(
-        resolve_path(raw_paths["baby_names"]),
-        source=settings.name_source,
-        random_count=settings.random_name_count,
-        seed=seed,
-    )
+    baby_path, random_path = names_paths(cfg)
+    names_path = baby_path if settings.name_source == "baby_names" else random_path
+    if not names_path.exists():
+        raise FileNotFoundError(
+            f"Name CSV not found: {names_path}. Run 'save-names' first."
+        )
+    names = pd.read_csv(names_path)["name"].tolist()
     adjacency_sets = generate_adjacency_sets(names, settings, seed)
     prefix_lengths = [int(length) for length in walk_cfg.get("prefix_lengths", [0, 1, 2, 3, 5, 8])]
     questions = generate_random_walk_questions(

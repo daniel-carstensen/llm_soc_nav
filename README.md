@@ -21,6 +21,7 @@ On the cluster, use `scripts/run_ollama.sh`; it assumes `uv` is available on `PA
 ```text
 configs/default.yaml      # paths, prompt generation, model groups, named run specs
 data/raw/                 # source CSVs
+data/names/               # saved name lists (baby_names.csv, random_strings.csv)
 data/prompts/             # canonical generated prompt CSVs
 src/llm_soc_nav/          # small research package
 scripts/run_ollama.sh     # Slurm entrypoint
@@ -35,13 +36,19 @@ List available named runs:
 uv run python -m llm_soc_nav list-runs
 ```
 
-Regenerate canonical prompt CSVs:
+Generate and save the filtered name lists (requires tokenizers; run once per model-group change):
+
+```bash
+uv run python -m llm_soc_nav save-names
+```
+
+Regenerate canonical prompt CSVs (reads from saved name lists):
 
 ```bash
 uv run python -m llm_soc_nav generate-prompts
 ```
 
-Hard-check candidate names against the actual tokenizers configured for the current model groups:
+Hard-check saved names against the actual tokenizers configured for the current model groups:
 
 ```bash
 uv run python -m llm_soc_nav check-name-tokens
@@ -92,7 +99,7 @@ prompt_conditions:
 
 Condition IDs use the readable axis labels `graph-social` / `graph-generic` and `names-baby` / `names-random`. `graph_context` can be `social` or `generic`. `name_source` can be `baby_names` or `random_strings`. `baby_names` filters the raw baby-name CSV to short one-token-style names; `random_strings` generates random four-character lowercase strings. Prompt CSV names are derived from this grid, so they do not need to be listed in the config.
 
-`name_token_check` maps each configured Ollama model family to the tokenizer to use for hard checks. The check command loads those tokenizers with `transformers`, filters baby-name and random-string candidates, and raises if any selected label is not exactly one token for every configured model tokenizer. Gated tokenizer repos require Hugging Face auth or a local tokenizer path in the config.
+`name_token_check` maps each configured Ollama model family to the tokenizer to use for name filtering and hard checks. Running `save-names` loads those tokenizers with `transformers`, filters baby-name and random-string candidates to names that are exactly one token for every configured model tokenizer, and writes the results to `data/names/baby_names.csv` and `data/names/random_strings.csv`. Running `check-name-tokens` reloads those saved CSVs and re-asserts the one-token property — fast to re-run after a tokenizer or config change. Both `generate-prompts` and `check-name-tokens` require the name CSVs to exist; run `save-names` first. Gated tokenizer repos require Hugging Face auth or a local tokenizer path in the config.
 
 Model groups are intentionally combinable with the task instructions:
 

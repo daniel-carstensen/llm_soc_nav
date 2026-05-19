@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 
 from llm_soc_nav.config import DEFAULT_CONFIG, load_config
-from llm_soc_nav.names import check_config_name_tokens
+from llm_soc_nav.names import check_config_name_tokens, save_names
 from llm_soc_nav.ollama_client import run_spec
 from llm_soc_nav.prompt_generation import generate_all_prompts
 from llm_soc_nav.run_specs import expand_specs, list_run_specs
@@ -21,6 +21,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_runs = subparsers.add_parser("list-runs", help="List named run specs and groups.")
     list_runs.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
+
+    save = subparsers.add_parser("save-names", help="Generate and save name CSVs to data/names/.")    
+    save.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
+    save.add_argument("--local-files-only", action="store_true", help="Load tokenizers only from local cache/paths.")
 
     check_names = subparsers.add_parser("check-name-tokens", help="Hard-check names against configured model tokenizers.")
     check_names.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
@@ -40,7 +44,15 @@ def main() -> None:
     args = build_parser().parse_args()
     cfg = load_config(args.config)
 
-    if args.command == "generate-prompts":
+    if args.command == "save-names":
+        if args.local_files_only:
+            cfg.setdefault("name_token_check", {})["local_files_only"] = True
+        counts = save_names(cfg)
+        print(
+            f"Saved {counts['baby_names']} baby names and {counts['random_strings']} random strings "
+            f"(checked against {counts['models']} model tokenizers)."
+        )
+    elif args.command == "generate-prompts":
         for path in generate_all_prompts(cfg):
             print(f"Wrote {path}")
     elif args.command == "list-runs":

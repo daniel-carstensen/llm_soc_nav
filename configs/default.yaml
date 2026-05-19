@@ -4,19 +4,20 @@ paths:
   raw:
     baby_names: data/raw/Popular_Baby_Names.csv
     tasks: data/raw/son_et_al_nhb_2024_nav_problems.csv
+  names_dir: data/names
   prompts_dir: data/prompts
   results_dir: /users/dlcarste/data/llm_soc_nav/results
 
 prompt_generation:
-  random_name_count: 1000
+  random_name_count: 500
   n_prompt_sets: 100
 
 name_token_check:
   local_files_only: false
-  random_candidate_multiplier: 50
+  random_candidate_multiplier: 500
   family_tokenizers:
     gemma3: google/gemma-3-4b-it
-    gemma4: google/gemma-3-4b-it
+    gemma4: google/gemma-4-E2B-it
     mistral-small3.2: mistralai/Mistral-Small-3.2-24B-Instruct-2506
     ministral-3: mistralai/Ministral-3-14B-Instruct-2512
     qwen3: Qwen/Qwen3-8B
@@ -43,17 +44,55 @@ random_walk_generation:
 
 model_groups:
   instruct_llm:
-    - gemma3:4b
+    # - gemma3:4b
     - gemma3:12b
     - gemma3:27b
+    # - name: gemma4:31b
+    #   label: gemma4-31b-no-think
+    #   prompt_prefix: "/no_think"
+    #   options:
+    #     temperature: 0
+    #     top_p: 0
+    #     top_k: 1
+    #     think: false
+    # - name: gemma4:e4b
+    #   label: gemma4-e4b-no-think
+    #   prompt_prefix: "/no_think"
+    #   options:
+    #     temperature: 0
+    #     top_p: 0
+    #     top_k: 1
+    #     think: false
+    - llama3.1:8b
+    # - mistral-nemo:latest 
+    # - mistral-small:22b
     - mistral-small3.2:24b
-    - name: qwen3:8b
-      label: qwen3-8b-no-think
-      prompt_prefix: "/no_think\n\n"
-      options:
-        temperature: 0
-        top_p: 0
-        top_k: 1
+    # - ministral-3:14b
+    # - mixtral:latest
+    # - name: qwen3.5:4b  
+    #   label: qwen3.5-4b-no-think
+    #   prompt_prefix: "/no_think"
+    #   options:
+    #     temperature: 0
+    #     top_p: 0
+    #     top_k: 1
+    #     think: false
+    # - name: qwen3.5:9b
+    #   label: qwen3.5-9b-no-think
+    #   prompt_prefix: "/no_think"
+    #   options:
+    #     temperature: 0
+    #     top_p: 0
+    #     top_k: 1
+    #     think: false
+    # - name: qwen3:8b
+    #   label: qwen3-8b-no-think
+    #   prompt_prefix: "/no_think"
+    #   options:
+    #     temperature: 0
+    #     top_p: 0
+    #     top_k: 1
+    #     think: false
   reasoning_llm:
     - name: qwen3:8b
       label: qwen3-8b
@@ -61,12 +100,41 @@ model_groups:
         temperature: 0.6
         top_p: 0.95
         top_k: 20
+        min_p: 0
+        presence_penalty: 1.5
+        repetition_penalty: 1
+        think: true
+    - name: qwen3.5:9b
+      label: qwen3.5-9b
+      options:
+        temperature: 1
+        top_p: 0.95
+        top_k: 20
+        min_p: 0
+        presence_penalty: 1.5
+        repetition_penalty: 1.0
+        think: true
+    - name: gemma4:e4b
+      label: gemma4-e4b
+      options:
+        temperature: 1
+        top_p: 0.95
+        top_k: 64
+        think: true
     - name: deepseek-r1:7b
       label: deepseek-r1-7b
       options:
         temperature: 0.6
         top_p: 0.95
         top_k: 20
+        think: true
+    - name: gpt-oss:20b
+      label: gpt-oss-20b
+      options:
+        temperature: 1
+        top_p: 0.95
+        top_k: 20
+        think: medium
 
 generation:
   top_logprobs: 20
@@ -78,10 +146,10 @@ generation:
       top_p: 0
       top_k: 1
       seed: 42
-      stop: ["\n", " ", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
+      stop: ["\n", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
   llm-path:
-    num_predict: 1024
-    logprobs: false
+    num_predict: 24
+    logprobs: true
     options:
       seed: 42
   llm-next-node:
@@ -92,7 +160,7 @@ generation:
       top_p: 0
       top_k: 1
       seed: 42
-      stop: ["\n", " ", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
+      stop: ["\n", "\t", ".", ",", ";", ":", "!", "?", "\"", "'"]
 
 run_matrices:
   classifier:
