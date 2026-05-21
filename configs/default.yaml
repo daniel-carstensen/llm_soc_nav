@@ -200,14 +200,6 @@ run_groups:
   classifier_graph-social_names-baby_runs:
     - matrix: classifier
       prompt_condition: graph-social_names-baby
-  classifier_instruct_graph-social_names-baby_runs:
-    - matrix: classifier
-      model_group: instruct_llm
-      prompt_condition: graph-social_names-baby
-  classifier_reasoning_graph-social_names-baby_runs:
-    - matrix: classifier
-      model_group: reasoning_llm
-      prompt_condition: graph-social_names-baby
   path_runs:
     - path
   path_instruct_runs:
@@ -218,14 +210,6 @@ run_groups:
       model_group: reasoning_llm
   path_graph-social_names-baby_runs:
     - matrix: path
-      prompt_condition: graph-social_names-baby
-  path_instruct_graph-social_names-baby_runs:
-    - matrix: path
-      model_group: instruct_llm
-      prompt_condition: graph-social_names-baby
-  path_reasoning_graph-social_names-baby_runs:
-    - matrix: path
-      model_group: reasoning_llm
       prompt_condition: graph-social_names-baby
   path_search_runs:
     - path_search
