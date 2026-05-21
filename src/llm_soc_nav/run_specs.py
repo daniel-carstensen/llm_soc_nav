@@ -101,6 +101,17 @@ def matrix_specs(cfg: dict[str, Any]) -> dict[str, RunSpec]:
     return specs
 
 
+def filtered_matrix(cfg: dict[str, Any], item: dict[str, Any]) -> dict[str, Any]:
+    matrix = dict(cfg["run_matrices"][item["matrix"]])
+    if "model_group" in item:
+        matrix["model_groups"] = [item["model_group"]]
+    if "prompt_condition" in item:
+        matrix["prompt_conditions"] = [item["prompt_condition"]]
+    if "prompt_conditions" in item:
+        matrix["prompt_conditions"] = list(item["prompt_conditions"])
+    return matrix
+
+
 def load_run_spec(cfg: dict[str, Any], name: str, model_override: list[str] | None = None) -> RunSpec:
     if name in cfg.get("run_specs", {}):
         raw = cfg["run_specs"][name]
@@ -132,12 +143,7 @@ def group_spec_names(cfg: dict[str, Any], group: str) -> list[str]:
     for item in cfg["run_groups"][group]:
         if isinstance(item, dict):
             matrix = item["matrix"]
-            matrix_generated = build_matrix_specs(cfg, matrix, cfg["run_matrices"][matrix])
-            if "model_group" in item:
-                prefix = f"{matrix}_{model_group_alias(item['model_group'])}_"
-                names.extend(name for name in sorted(matrix_generated) if name.startswith(prefix))
-            else:
-                names.extend(sorted(matrix_generated))
+            names.extend(sorted(build_matrix_specs(cfg, matrix, filtered_matrix(cfg, item))))
             continue
         if item in cfg.get("run_matrices", {}):
             names.extend(sorted(build_matrix_specs(cfg, item, cfg["run_matrices"][item])))

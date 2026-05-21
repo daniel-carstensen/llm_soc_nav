@@ -66,6 +66,20 @@ Run a group:
 uv run python -m llm_soc_nav run --group path_runs
 ```
 
+Run classifier/path groups subset to one model type:
+
+```bash
+uv run python -m llm_soc_nav run --group classifier_instruct_runs
+uv run python -m llm_soc_nav run --group path_reasoning_runs
+```
+
+Run a group only for the `graph-social_names-baby` prompt condition:
+
+```bash
+uv run python -m llm_soc_nav run --group classifier_graph-social_names-baby_runs
+uv run python -m llm_soc_nav run --group path_instruct_graph-social_names-baby_runs
+```
+
 Run random-walk next-node scoring for instruct models:
 
 ```bash

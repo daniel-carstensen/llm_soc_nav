@@ -13,7 +13,8 @@ CFG = {
                 "prompt_prefix": "/no_think\n\n",
                 "options": {"temperature": 0},
             },
-        ]
+        ],
+        "reasoning_llm": ["deepseek-r1:7b"],
     },
     "prompt_conditions": [
         {
@@ -42,6 +43,13 @@ CFG = {
             "search_instructs": ["search-random-walk"],
             "output_label": "llm-next-node",
         },
+        "classifier_all": {
+            "model_groups": ["instruct_llm", "reasoning_llm"],
+            "prompt_conditions": ["graph-social_names-baby", "graph-generic_names-baby"],
+            "llm_instruct": "llm-classifier",
+            "search_instructs": ["search-base"],
+            "output_label": "llm-classifier",
+        },
     },
     "run_specs": {
         "classifier_instruct": {
@@ -50,7 +58,20 @@ CFG = {
             "search_instruct": "search-base",
         },
     },
-    "run_groups": {"classifier_runs": ["classifier"], "next_node_runs": ["next_node"]},
+    "run_groups": {
+        "classifier_runs": ["classifier"],
+        "next_node_runs": ["next_node"],
+        "classifier_all_instruct_baby_runs": [
+            {
+                "matrix": "classifier_all",
+                "model_group": "instruct_llm",
+                "prompt_condition": "graph-social_names-baby",
+            }
+        ],
+        "classifier_all_baby_runs": [
+            {"matrix": "classifier_all", "prompt_condition": "graph-social_names-baby"}
+        ],
+    },
 }
 
 
@@ -67,6 +88,20 @@ def test_expand_group():
     assert [spec.name for spec in specs] == [
         "classifier_instruct_graph-generic_names-baby",
         "classifier_instruct_graph-social_names-baby",
+    ]
+
+
+def test_group_can_filter_model_group_and_prompt_condition():
+    specs = expand_specs(CFG, group="classifier_all_instruct_baby_runs")
+    assert [spec.name for spec in specs] == ["classifier_all_instruct_graph-social_names-baby"]
+    assert [model.name for model in specs[0].models] == ["gemma3:4b", "qwen3:8b"]
+
+
+def test_group_can_filter_prompt_condition_only():
+    specs = expand_specs(CFG, group="classifier_all_baby_runs")
+    assert [spec.name for spec in specs] == [
+        "classifier_all_instruct_graph-social_names-baby",
+        "classifier_all_reasoning_graph-social_names-baby",
     ]
 
 
