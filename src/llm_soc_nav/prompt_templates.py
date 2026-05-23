@@ -63,8 +63,12 @@ SEARCH_INSTRUCTIONS: dict[str, str] = {
 }
 
 
+def is_generic_graph_context(graph_context: str) -> bool:
+    return graph_context in {"generic", "generic_adj_list"}
+
+
 def classifier_question(start: str, end: str, opt1: str, opt2: str, graph_context: str = "social") -> str:
-    if graph_context == "generic":
+    if is_generic_graph_context(graph_context):
         return (
             f"In the graph, what is the most efficient first step from {start} to {end}: "
             f"{opt1} or {opt2}?"
@@ -76,7 +80,7 @@ def classifier_question(start: str, end: str, opt1: str, opt2: str, graph_contex
 
 
 def path_question(start: str, end: str, opt1: str, opt2: str, graph_context: str = "social") -> str:
-    if graph_context == "generic":
+    if is_generic_graph_context(graph_context):
         return (
             f"Find the shortest path from {start} to {end}. The first step after {start} "
             f"must be either {opt1} or {opt2}."

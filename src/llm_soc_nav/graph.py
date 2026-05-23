@@ -37,9 +37,20 @@ def generic_graph_sentences(names: list[str]) -> list[str]:
     return sentences
 
 
+def generic_adjacency_list(names: list[str]) -> list[str]:
+    """Return one structured adjacency-list block for a 13-label graph assignment."""
+    lines = ["Adjacency list:"]
+    for node_id in range(len(SOCIAL_GRAPH)):
+        neighbors = ", ".join(names[neighbor_id] for neighbor_id in sorted(SOCIAL_GRAPH[node_id]))
+        lines.append(f"node {names[node_id]}: {neighbors}")
+    return ["\n".join(lines)]
+
+
 def graph_sentences(names: list[str], graph_context: str = "social") -> list[str]:
     if graph_context == "social":
         return friendship_sentences(names)
     if graph_context == "generic":
         return generic_graph_sentences(names)
-    raise ValueError("graph_context must be 'social' or 'generic'.")
+    if graph_context == "generic_adj_list":
+        return generic_adjacency_list(names)
+    raise ValueError("graph_context must be 'social', 'generic', or 'generic_adj_list'.")

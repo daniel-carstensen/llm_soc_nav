@@ -38,6 +38,12 @@ prompt_conditions:
   - id: graph-generic_names-random
     graph_context: generic
     name_source: random_strings
+  - id: graph-generic-adj-list_names-baby
+    graph_context: generic_adj_list
+    name_source: baby_names
+  - id: graph-generic-adj-list_names-random
+    graph_context: generic_adj_list
+    name_source: random_strings
 
 random_walk_generation:
   prefix_lengths: [0, 1, 2, 3, 5, 8]
@@ -165,13 +171,13 @@ generation:
 run_matrices:
   classifier:
     model_groups: [instruct_llm, reasoning_llm]
-    prompt_conditions: [graph-social_names-baby, graph-social_names-random, graph-generic_names-baby, graph-generic_names-random]
+    prompt_conditions: [graph-social_names-baby, graph-social_names-random, graph-generic_names-baby, graph-generic_names-random, graph-generic-adj-list_names-baby, graph-generic-adj-list_names-random]
     llm_instruct: llm-classifier
     search_instructs: [search-base]
     output_label: llm-classifier
   path:
     model_groups: [instruct_llm, reasoning_llm]
-    prompt_conditions: [graph-social_names-baby, graph-social_names-random, graph-generic_names-baby, graph-generic_names-random]
+    prompt_conditions: [graph-social_names-baby, graph-social_names-random, graph-generic_names-baby, graph-generic_names-random, graph-generic-adj-list_names-baby, graph-generic-adj-list_names-random]
     llm_instruct: llm-path
     search_instructs: [search-base]
     output_label: llm-path
@@ -183,7 +189,7 @@ run_matrices:
     output_label: llm-path
   next_node:
     model_groups: [instruct_llm]
-    prompt_conditions: [graph-social_names-baby, graph-social_names-random, graph-generic_names-baby, graph-generic_names-random]
+    prompt_conditions: [graph-social_names-baby, graph-social_names-random, graph-generic_names-baby, graph-generic_names-random, graph-generic-adj-list_names-baby, graph-generic-adj-list_names-random]
     llm_instruct: llm-next-node
     search_instructs: [search-random-walk]
     output_label: llm-next-node

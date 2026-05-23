@@ -65,8 +65,12 @@ def test_prompt_conditions_include_all_graph_name_controls():
         "graph-social_names-random",
         "graph-generic_names-baby",
         "graph-generic_names-random",
+        "graph-generic-adj-list_names-baby",
+        "graph-generic-adj-list_names-random",
     }
     assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-social_names-baby" in nav_prompts
     assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-generic_names-random" in nav_prompts
+    assert "adj-list-shuffled_adj-prompt-shuffled_choices-shuffled_graph-generic-adj-list_names-baby" in nav_prompts
     assert "random-walk-next-node_graph-social_names-random" in walk_prompts
     assert "random-walk-next-node_graph-generic_names-baby" in walk_prompts
+    assert "random-walk-next-node_graph-generic-adj-list_names-random" in walk_prompts

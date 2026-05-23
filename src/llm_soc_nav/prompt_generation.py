@@ -66,6 +66,16 @@ def default_prompt_conditions() -> list[dict[str, str]]:
             "graph_context": "generic",
             "name_source": "random_strings",
         },
+        {
+            "id": "graph-generic-adj-list_names-baby",
+            "graph_context": "generic_adj_list",
+            "name_source": "baby_names",
+        },
+        {
+            "id": "graph-generic-adj-list_names-random",
+            "graph_context": "generic_adj_list",
+            "name_source": "random_strings",
+        },
     ]
 
 
@@ -74,7 +84,8 @@ def prompt_conditions(cfg: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def condition_label(condition: dict[str, str]) -> str:
-    graph_label = f"graph-{condition['graph_context']}"
+    graph_context = condition["graph_context"].replace("_", "-")
+    graph_label = f"graph-{graph_context}"
     name_label = "names-baby" if condition["name_source"] == "baby_names" else "names-random"
     return f"{graph_label}_{name_label}"
 
