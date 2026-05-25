@@ -8,6 +8,7 @@ from llm_soc_nav.config import DEFAULT_CONFIG, load_config
 from llm_soc_nav.names import check_config_name_tokens, save_names
 from llm_soc_nav.ollama_client import run_spec
 from llm_soc_nav.prompt_generation import generate_all_prompts
+from llm_soc_nav.results import missing_runs
 from llm_soc_nav.run_specs import expand_specs, list_run_specs
 
 
@@ -21,6 +22,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_runs = subparsers.add_parser("list-runs", help="List named run specs and groups.")
     list_runs.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
+
+    missing = subparsers.add_parser("missing-runs", help="Show runs with no result file yet.")
+    missing.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
 
     save = subparsers.add_parser("save-names", help="Generate and save name CSVs to data/names/.")    
     save.add_argument("--config", default=argparse.SUPPRESS, help="Path to YAML config.")
@@ -57,6 +61,18 @@ def main() -> None:
             print(f"Wrote {path}")
     elif args.command == "list-runs":
         print(list_run_specs(cfg))
+    elif args.command == "missing-runs":
+        missing = missing_runs(cfg)
+        if not missing:
+            print("All runs complete.")
+        else:
+            current_spec = None
+            for spec_name, model_label in sorted(missing):
+                if spec_name != current_spec:
+                    print(f"\n{spec_name}")
+                    current_spec = spec_name
+                print(f"  {model_label}")
+            print(f"\n{len(missing)} run(s) missing.")
     elif args.command == "check-name-tokens":
         if args.local_files_only:
             cfg.setdefault("name_token_check", {})["local_files_only"] = True

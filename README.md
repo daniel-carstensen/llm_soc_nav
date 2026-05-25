@@ -36,6 +36,12 @@ List available named runs:
 uv run python -m llm_soc_nav list-runs
 ```
 
+Check which runs are still missing result files:
+
+```bash
+uv run python -m llm_soc_nav missing-runs
+```
+
 Generate and save the filtered name lists (requires tokenizers; run once per model-group change):
 
 ```bash
